@@ -353,7 +353,7 @@
       "family_label": "Tooling",
       "family_description": "Static policy, command construction, and interactive terminal behavior.",
       "family_order": 9,
-      "version": "v1.0.0",
+      "version": "1.0.0",
       "tag_prefix": "v",
       "owned_dependencies": [],
       "reverse_owned_dependencies": [],
