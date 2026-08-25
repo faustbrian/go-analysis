@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
-	"github.com/faustbrian/golib/pkg/analysis/internal/driver"
+	shared "github.com/faustbrian/go-analysis/analysis"
+	"github.com/faustbrian/go-analysis/internal/driver"
 )
 
 func TestRunHonorsBlockingAndDisabledStatus(t *testing.T) {

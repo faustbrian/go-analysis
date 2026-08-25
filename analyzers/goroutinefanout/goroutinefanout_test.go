@@ -3,7 +3,7 @@ package goroutinefanout_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/goroutinefanout"
+	"github.com/faustbrian/go-analysis/analyzers/goroutinefanout"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

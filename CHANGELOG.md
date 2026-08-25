@@ -6,6 +6,8 @@ semantic versioning after v1; pre-v1 compatibility decisions are described in
 
 ## Unreleased
 
+## 1.0.0 - 2026-08-25
+
 ### Documentation
 
 - Link the package README to the repository-wide Golib documentation portal.
@@ -16,6 +18,7 @@ semantic versioning after v1; pre-v1 compatibility decisions are described in
 
 ### Changed
 
+- Publish the module from its standalone `github.com/faustbrian/go-analysis` identity while preserving its documented API and behavior.
 - Use a deterministic execution budget for default fuzz smoke campaigns while
   allowing explicit duration overrides for extended fuzzing.
 - Made command exit-code and vettool fallback orchestration independently

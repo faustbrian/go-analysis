@@ -2,7 +2,7 @@
 
 ## Supported code
 
-The project is pre-v1. Security fixes target the latest released version and
+Security fixes target the latest stable v1 release and
 the current `main` branch. Older snapshots may not receive patches. Consumers
 should pin an exact release artifact and checksum, then update deliberately.
 

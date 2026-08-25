@@ -3,7 +3,7 @@ package metriccardinality_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/metriccardinality"
+	"github.com/faustbrian/go-analysis/analyzers/metriccardinality"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
 )

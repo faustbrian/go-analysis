@@ -3,7 +3,7 @@ package nostoredcontext_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/nostoredcontext"
+	"github.com/faustbrian/go-analysis/analyzers/nostoredcontext"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

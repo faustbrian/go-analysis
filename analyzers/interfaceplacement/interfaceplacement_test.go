@@ -3,7 +3,7 @@ package interfaceplacement_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/interfaceplacement"
+	"github.com/faustbrian/go-analysis/analyzers/interfaceplacement"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

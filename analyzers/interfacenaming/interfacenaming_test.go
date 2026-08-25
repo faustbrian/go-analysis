@@ -3,7 +3,7 @@ package interfacenaming_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/interfacenaming"
+	"github.com/faustbrian/go-analysis/analyzers/interfacenaming"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

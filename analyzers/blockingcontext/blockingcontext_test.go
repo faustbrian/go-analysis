@@ -3,7 +3,7 @@ package blockingcontext_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/blockingcontext"
+	"github.com/faustbrian/go-analysis/analyzers/blockingcontext"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

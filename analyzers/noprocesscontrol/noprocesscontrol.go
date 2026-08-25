@@ -6,7 +6,7 @@ import (
 	"go/types"
 	"strings"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
+	shared "github.com/faustbrian/go-analysis/analysis"
 	"golang.org/x/tools/go/analysis"
 )
 

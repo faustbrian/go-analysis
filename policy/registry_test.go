@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
-	"github.com/faustbrian/golib/pkg/analysis/policy"
+	shared "github.com/faustbrian/go-analysis/analysis"
+	"github.com/faustbrian/go-analysis/policy"
 )
 
 func TestRegistryRejectsUngovernedAndDuplicateRules(t *testing.T) {

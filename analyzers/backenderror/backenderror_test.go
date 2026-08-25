@@ -3,7 +3,7 @@ package backenderror_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/backenderror"
+	"github.com/faustbrian/go-analysis/analyzers/backenderror"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

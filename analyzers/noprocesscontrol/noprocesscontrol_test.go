@@ -3,7 +3,7 @@ package noprocesscontrol_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/noprocesscontrol"
+	"github.com/faustbrian/go-analysis/analyzers/noprocesscontrol"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

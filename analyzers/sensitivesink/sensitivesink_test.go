@@ -3,7 +3,7 @@ package sensitivesink_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/sensitivesink"
+	"github.com/faustbrian/go-analysis/analyzers/sensitivesink"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
 )

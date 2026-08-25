@@ -1,31 +1,27 @@
 version: "2"
 
 run:
-  timeout: 5m
+  timeout: 10m
 
 linters:
-  default: none
+  default: standard
   enable:
     - bodyclose
     - errorlint
-    - errcheck
-    - gomodguard_v2
+    - exhaustive
+    - gocritic
     - gosec
-    - govet
-    - ineffassign
-    - interfacebloat
-    - ireturn
+    - nilerr
     - noctx
-    - promlinter
+    - prealloc
+    - revive
+    - rowserrcheck
     - sqlclosecheck
-    - staticcheck
-    - unused
+    - testifylint
+    - unconvert
+    - unparam
+    - wastedassign
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-
-formatters:
-  enable:
-    - gofmt
-    - goimports

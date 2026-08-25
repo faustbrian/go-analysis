@@ -3,7 +3,7 @@ package mutableglobal_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/mutableglobal"
+	"github.com/faustbrian/go-analysis/analyzers/mutableglobal"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

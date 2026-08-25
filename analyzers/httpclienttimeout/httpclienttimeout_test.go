@@ -3,7 +3,7 @@ package httpclienttimeout_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/httpclienttimeout"
+	"github.com/faustbrian/go-analysis/analyzers/httpclienttimeout"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

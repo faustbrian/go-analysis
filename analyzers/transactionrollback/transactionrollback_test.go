@@ -3,7 +3,7 @@ package transactionrollback_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/transactionrollback"
+	"github.com/faustbrian/go-analysis/analyzers/transactionrollback"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

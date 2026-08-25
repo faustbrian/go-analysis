@@ -3,7 +3,7 @@ package nounsafe_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/nounsafe"
+	"github.com/faustbrian/go-analysis/analyzers/nounsafe"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

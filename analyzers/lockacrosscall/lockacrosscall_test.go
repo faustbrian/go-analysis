@@ -3,7 +3,7 @@ package lockacrosscall_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/lockacrosscall"
+	"github.com/faustbrian/go-analysis/analyzers/lockacrosscall"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

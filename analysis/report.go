@@ -270,7 +270,7 @@ func buildSARIF(report Report) sarifDocument {
 			Tool: sarifTool{Driver: sarifDriver{
 				Name:           "analysis",
 				Version:        report.ToolVersion,
-				InformationURI: "https://github.com/faustbrian/golib/pkg/analysis",
+				InformationURI: "https://github.com/faustbrian/go-analysis",
 				Rules:          descriptors,
 			}},
 			Results: results,

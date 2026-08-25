@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
-	"github.com/faustbrian/golib/pkg/analysis/policy"
+	shared "github.com/faustbrian/go-analysis/analysis"
+	"github.com/faustbrian/go-analysis/policy"
 	toolanalysis "golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/checker"
 	"golang.org/x/tools/go/packages"

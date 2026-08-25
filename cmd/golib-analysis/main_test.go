@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"testing"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
-	"github.com/faustbrian/golib/pkg/analysis/policy"
+	shared "github.com/faustbrian/go-analysis/analysis"
+	"github.com/faustbrian/go-analysis/policy"
 	toolanalysis "golang.org/x/tools/go/analysis"
 )
 

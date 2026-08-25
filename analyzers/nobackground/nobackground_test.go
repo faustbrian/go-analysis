@@ -3,7 +3,7 @@ package nobackground_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/nobackground"
+	"github.com/faustbrian/go-analysis/analyzers/nobackground"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

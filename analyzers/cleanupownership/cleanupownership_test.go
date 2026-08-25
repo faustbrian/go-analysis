@@ -3,7 +3,7 @@ package cleanupownership_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/cleanupownership"
+	"github.com/faustbrian/go-analysis/analyzers/cleanupownership"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

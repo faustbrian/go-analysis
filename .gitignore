@@ -1,4 +1,5 @@
-/.build/
-/dist/
-!/testdata/coverage/
-!/testdata/coverage/**
+.artifacts/
+.tools/
+.gocache*/
+.DS_Store
+coverage.out

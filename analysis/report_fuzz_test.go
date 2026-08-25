@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
+	shared "github.com/faustbrian/go-analysis/analysis"
 )
 
 func FuzzReportWriters(f *testing.F) {

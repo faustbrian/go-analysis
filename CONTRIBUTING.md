@@ -1,64 +1,55 @@
 # Contributing
 
-## Propose one semantic policy
+## Before Editing
 
-Start with a short design note containing the stable rule ID, owner, category,
-severity, rationale, remediation, configuration shape, exact diagnostic
-location, and proof needed to report. Compare the proposed semantics with every
-tool in [the conflict matrix](docs/governance.md). A different message or
-package-specific severity does not justify duplicating a mature analyzer.
+1. Read [`AGENTS.md`](AGENTS.md) and the affected module's goals and docs.
+2. Run `make inventory` and the narrow baseline gate for the module.
+3. Identify owned dependencies and reverse dependants in `modules.json`.
+4. Preserve unrelated work and generated/corpus provenance.
 
-Describe likely false positives before implementation. State what the analyzer
-will deliberately accept when evidence is incomplete. Prefer missing a finding
-to guessing about execution, ownership, identity, or data flow.
+## Changes
 
-## Develop test first
+Keep commits focused and conventional. Update every affected changelog with
+the behavior and migration impact. Public API changes require compatibility
+evidence and documentation. Specification behavior requires a decision record,
+fixture coverage, and interoperability evidence.
 
-Add `analysistest` fixtures that fail because the intended diagnostic is absent.
-Every diagnostic needs rejected and accepted cases, a near miss, aliases,
-generics when applicable, build-tag behavior, generated-code behavior, and
-multi-package evidence. Add internal tests for malformed or otherwise
-unreachable analysis states.
+New direct dependencies and dependency updates must follow the
+[dependency governance policy](docs/dependency-governance.md). Package-local
+update bots are forbidden; the root policy owns every module and action update.
 
-Implement with syntax, `types.Info`, facts, or bounded control/data flow. Do not
-identify APIs by textual spelling. Resolve the declared object so aliases, dot
-imports, methods, and generic instantiations have the same semantics.
+Specification-backed changes must follow the
+[specification governance contract](docs/specification-governance.md), update
+the affected stable decision entries, and complete the Specification Decisions
+section of the pull request template. An unresolved interpretation or stale
+source pin is release-blocking; peer behavior cannot silently select policy.
 
-Suggested fixes are appropriate only when the transformed program preserves
-meaning without guessing. A rule is complete without a fix.
+Do not add package-local workflows, permanent replacements, machine-specific
+paths, bypass flags, broad mutation exclusions, or aggregate quality metrics
+that hide a failing package.
 
-## Integrate a rule
+## Verification
 
-Export `Rule` and `Analyzer` from one cohesive analyzer package. Configurable
-rules also expose typed `Options` and `New`; invalid, duplicate, overlapping, or
-unbounded policy is rejected in `New`. Register the rule in the raw
-multichecker, configured driver, policy registry, shared fuzz harness, aggregate
-benchmark, mutation script, rule catalog, configuration example, and command
-tests.
+Run during development:
 
-Run `make compatibility-update` only after reviewing an intentional public or
-rule-contract change and documenting its migration impact. Never refresh a
-baseline merely to make the check green.
-
-## Prove precision and cost
-
-Run the focused analyzer tests during development, then:
-
-```sh
-make check
-make race
-make benchmark
-make nilaway
+```bash
+make inventory
+make specification-decisions
+make check MODULES=pkg/<library>
 ```
 
-`make check` includes formatting, docs, compatibility, reproducible builds,
-vet, tests, meaningful 100% production statement coverage, vettool execution,
-Staticcheck, strict golangci-lint, govulncheck, actionlint, fuzz smoke, and
-mutation testing. The mutation runner covers shared configuration, driver,
-governance, and every shipped analyzer package; new diagnostic decisions need
-zero surviving and zero uncovered mutants. Record benchmark changes and justify
-allocation-budget increases with measured analyzer work.
+Before submitting a repository-wide change:
 
-Evaluate the complete owned repository corpus before recommending blocking
-status. Classify every finding and retain stable expected advisories. A local
-fixture suite is not corpus precision evidence.
+```bash
+make ci-changed BASE=origin/main
+```
+
+The full scheduled and release gate is `make ci`. Report every unavailable or
+failing command; do not describe partial results as release-ready.
+
+## Adding A Module
+
+Follow [module lifecycle procedures](docs/module-lifecycle.md). New modules
+require an explicit purpose, ownership boundary, dependency review, package
+catalog entry, full quality gates, documentation, changelog, license, security
+policy, compatibility plan, and release dry-run.

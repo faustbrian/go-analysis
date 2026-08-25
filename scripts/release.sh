@@ -26,7 +26,7 @@ trap 'rm -rf "$temporary"' EXIT HUP INT TERM
 mkdir -p "$temporary/stage" "$temporary/output"
 
 platforms='linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64'
-ldflags="-s -w -X github.com/faustbrian/golib/pkg/analysis/internal/version.Value=$version"
+ldflags="-s -w -X github.com/faustbrian/go-analysis/internal/version.Value=$version"
 
 for platform in $platforms; do
 	goos=${platform%/*}

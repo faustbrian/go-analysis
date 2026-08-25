@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/policy"
+	"github.com/faustbrian/go-analysis/policy"
 )
 
 func TestBuiltinRegistryOwnsEveryShippedRule(t *testing.T) {

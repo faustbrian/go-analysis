@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
+	shared "github.com/faustbrian/go-analysis/analysis"
 )
 
 // Overlap documents another tool covering adjacent or identical semantics.

@@ -3,7 +3,7 @@ package globalgoroutine_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/globalgoroutine"
+	"github.com/faustbrian/go-analysis/analyzers/globalgoroutine"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

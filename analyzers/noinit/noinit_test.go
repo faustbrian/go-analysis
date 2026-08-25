@@ -3,7 +3,7 @@ package noinit_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/noinit"
+	"github.com/faustbrian/go-analysis/analyzers/noinit"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

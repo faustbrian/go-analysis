@@ -1,6 +1,6 @@
-## github.com/faustbrian/golib/pkg/analysis/analysis
+## github.com/faustbrian/go-analysis/analysis
 
-package analysis // import "github.com/faustbrian/golib/pkg/analysis/analysis"
+package analysis // import "github.com/faustbrian/go-analysis/analysis"
 
 Package analysis defines shared contracts used by every analyzer and report.
 
@@ -343,15 +343,15 @@ type TransactionPolicy struct {
     ownership contract.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analysistestkit
+## github.com/faustbrian/go-analysis/analysistestkit
 
-package analysistestkit // import "github.com/faustbrian/golib/pkg/analysis/analysistestkit"
+package analysistestkit // import "github.com/faustbrian/go-analysis/analysistestkit"
 
 Package analysistestkit provides shared analyzer robustness fixtures.
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/backenderror
+## github.com/faustbrian/go-analysis/analyzers/backenderror
 
-package backenderror // import "github.com/faustbrian/golib/pkg/analysis/analyzers/backenderror"
+package backenderror // import "github.com/faustbrian/go-analysis/analyzers/backenderror"
 
 Package backenderror prevents configured backend errors from crossing exported
 API boundaries without an explicit classification step.
@@ -420,9 +420,9 @@ type Passthrough struct {
     argument positions.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/blockingcontext
+## github.com/faustbrian/go-analysis/analyzers/blockingcontext
 
-package blockingcontext // import "github.com/faustbrian/golib/pkg/analysis/analyzers/blockingcontext"
+package blockingcontext // import "github.com/faustbrian/go-analysis/analyzers/blockingcontext"
 
 Package blockingcontext requires context on configured blocking APIs.
 
@@ -469,9 +469,9 @@ type Policy struct {
     Policy names exported blocking functions in one exact package.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/cleanupownership
+## github.com/faustbrian/go-analysis/analyzers/cleanupownership
 
-package cleanupownership // import "github.com/faustbrian/golib/pkg/analysis/analyzers/cleanupownership"
+package cleanupownership // import "github.com/faustbrian/go-analysis/analyzers/cleanupownership"
 
 Package cleanupownership detects discarded cleanup results from configured
 constructors.
@@ -521,9 +521,9 @@ type Options struct {
     Options configures cleanup ownership contracts.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/constructorgoroutine
+## github.com/faustbrian/go-analysis/analyzers/constructorgoroutine
 
-package constructorgoroutine // import "github.com/faustbrian/golib/pkg/analysis/analyzers/constructorgoroutine"
+package constructorgoroutine // import "github.com/faustbrian/go-analysis/analyzers/constructorgoroutine"
 
 Package constructorgoroutine forbids hidden goroutine startup in constructors.
 
@@ -570,9 +570,9 @@ type Policy struct {
     Policy names exact constructor functions and methods in one package.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/forbiddenapi
+## github.com/faustbrian/go-analysis/analyzers/forbiddenapi
 
-package forbiddenapi // import "github.com/faustbrian/golib/pkg/analysis/analyzers/forbiddenapi"
+package forbiddenapi // import "github.com/faustbrian/go-analysis/analyzers/forbiddenapi"
 
 Package forbiddenapi enforces organization-specific API migrations.
 
@@ -621,9 +621,9 @@ type Policy struct {
     Policy identifies one exact callable and its approved replacement.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/globalgoroutine
+## github.com/faustbrian/go-analysis/analyzers/globalgoroutine
 
-package globalgoroutine // import "github.com/faustbrian/golib/pkg/analysis/analyzers/globalgoroutine"
+package globalgoroutine // import "github.com/faustbrian/go-analysis/analyzers/globalgoroutine"
 
 Package globalgoroutine detects goroutines started by package initialization.
 
@@ -648,9 +648,9 @@ var Rule = shared.Rule{
     Rule is the stable metadata for package-global goroutine ownership.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/goroutinefanout
+## github.com/faustbrian/go-analysis/analyzers/goroutinefanout
 
-package goroutinefanout // import "github.com/faustbrian/golib/pkg/analysis/analyzers/goroutinefanout"
+package goroutinefanout // import "github.com/faustbrian/go-analysis/analyzers/goroutinefanout"
 
 Package goroutinefanout detects goroutine launches repeated by loops without a
 statically proven organization-approved bound.
@@ -698,9 +698,9 @@ type Policy struct {
     Policy opts one package or trailing /... tree into fan-out enforcement.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/httpclienttimeout
+## github.com/faustbrian/go-analysis/analyzers/httpclienttimeout
 
-package httpclienttimeout // import "github.com/faustbrian/golib/pkg/analysis/analyzers/httpclienttimeout"
+package httpclienttimeout // import "github.com/faustbrian/go-analysis/analyzers/httpclienttimeout"
 
 Package httpclienttimeout requires explicit timeout ownership for HTTP clients.
 
@@ -742,9 +742,9 @@ type Options struct {
     clients.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/importboundary
+## github.com/faustbrian/go-analysis/analyzers/importboundary
 
-package importboundary // import "github.com/faustbrian/golib/pkg/analysis/analyzers/importboundary"
+package importboundary // import "github.com/faustbrian/go-analysis/analyzers/importboundary"
 
 Package importboundary enforces configured package dependency direction.
 
@@ -833,9 +833,9 @@ type RestrictedDependency struct {
     may import. It models backend clients and other adapter-owned APIs.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/interfacenaming
+## github.com/faustbrian/go-analysis/analyzers/interfacenaming
 
-package interfacenaming // import "github.com/faustbrian/golib/pkg/analysis/analyzers/interfacenaming"
+package interfacenaming // import "github.com/faustbrian/go-analysis/analyzers/interfacenaming"
 
 Package interfacenaming enforces configured names for exported value interfaces.
 
@@ -884,9 +884,9 @@ type Policy struct {
     Policy configures one non-overlapping package tree's interface names.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/interfaceplacement
+## github.com/faustbrian/go-analysis/analyzers/interfaceplacement
 
-package interfaceplacement // import "github.com/faustbrian/golib/pkg/analysis/analyzers/interfaceplacement"
+package interfaceplacement // import "github.com/faustbrian/go-analysis/analyzers/interfaceplacement"
 
 Package interfaceplacement enforces consumer-owned public interfaces in
 configured provider package trees.
@@ -929,9 +929,9 @@ type Options struct {
     interfaces.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/lockacrosscall
+## github.com/faustbrian/go-analysis/analyzers/lockacrosscall
 
-package lockacrosscall // import "github.com/faustbrian/golib/pkg/analysis/analyzers/lockacrosscall"
+package lockacrosscall // import "github.com/faustbrian/go-analysis/analyzers/lockacrosscall"
 
 Package lockacrosscall detects configured calls made while locks are held.
 
@@ -979,9 +979,9 @@ type Options struct {
     Options configures calls that must not run while a lock is held.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/metriccardinality
+## github.com/faustbrian/go-analysis/analyzers/metriccardinality
 
-package metriccardinality // import "github.com/faustbrian/golib/pkg/analysis/analyzers/metriccardinality"
+package metriccardinality // import "github.com/faustbrian/go-analysis/analyzers/metriccardinality"
 
 Package metriccardinality detects configured high-cardinality typed values
 passed to configured metric label positions.
@@ -1083,9 +1083,9 @@ type Sink struct {
     Sink identifies metric label argument positions on an exact callable.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/mutableglobal
+## github.com/faustbrian/go-analysis/analyzers/mutableglobal
 
-package mutableglobal // import "github.com/faustbrian/golib/pkg/analysis/analyzers/mutableglobal"
+package mutableglobal // import "github.com/faustbrian/go-analysis/analyzers/mutableglobal"
 
 Package mutableglobal reports package variables that hold shared mutable state
 rather than immutable scalar values.
@@ -1132,9 +1132,9 @@ type Policy struct {
     Policy selects one package tree for shared-state enforcement.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/nobackground
+## github.com/faustbrian/go-analysis/analyzers/nobackground
 
-package nobackground // import "github.com/faustbrian/golib/pkg/analysis/analyzers/nobackground"
+package nobackground // import "github.com/faustbrian/go-analysis/analyzers/nobackground"
 
 Package nobackground restricts root context creation to composition roots.
 
@@ -1175,9 +1175,9 @@ type Options struct {
     Options configures packages that own root context creation.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/nodefaulthttp
+## github.com/faustbrian/go-analysis/analyzers/nodefaulthttp
 
-package nodefaulthttp // import "github.com/faustbrian/golib/pkg/analysis/analyzers/nodefaulthttp"
+package nodefaulthttp // import "github.com/faustbrian/go-analysis/analyzers/nodefaulthttp"
 
 Package nodefaulthttp forbids process-global HTTP clients and transports.
 
@@ -1215,9 +1215,9 @@ var Rule = shared.Rule{
     Rule is the stable metadata for HTTP lifecycle ownership policy.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/noinit
+## github.com/faustbrian/go-analysis/analyzers/noinit
 
-package noinit // import "github.com/faustbrian/golib/pkg/analysis/analyzers/noinit"
+package noinit // import "github.com/faustbrian/go-analysis/analyzers/noinit"
 
 Package noinit requires explicit construction instead of package init.
 
@@ -1258,9 +1258,9 @@ type Options struct {
     Options configures packages with a reviewed need for init.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/noprocesscontrol
+## github.com/faustbrian/go-analysis/analyzers/noprocesscontrol
 
-package noprocesscontrol // import "github.com/faustbrian/golib/pkg/analysis/analyzers/noprocesscontrol"
+package noprocesscontrol // import "github.com/faustbrian/go-analysis/analyzers/noprocesscontrol"
 
 Package noprocesscontrol restricts process termination to entrypoints.
 
@@ -1301,9 +1301,9 @@ type Options struct {
     Options configures approved composition-root packages.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/nostoredcontext
+## github.com/faustbrian/go-analysis/analyzers/nostoredcontext
 
-package nostoredcontext // import "github.com/faustbrian/golib/pkg/analysis/analyzers/nostoredcontext"
+package nostoredcontext // import "github.com/faustbrian/go-analysis/analyzers/nostoredcontext"
 
 Package nostoredcontext forbids context lifecycle storage in structs.
 
@@ -1344,9 +1344,9 @@ type Options struct {
     Options configures reviewed lifecycle owner packages.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/nounsafe
+## github.com/faustbrian/go-analysis/analyzers/nounsafe
 
-package nounsafe // import "github.com/faustbrian/golib/pkg/analysis/analyzers/nounsafe"
+package nounsafe // import "github.com/faustbrian/go-analysis/analyzers/nounsafe"
 
 Package nounsafe forbids unsafe, cgo, and go:linkname in production policy.
 
@@ -1371,9 +1371,9 @@ var Rule = shared.Rule{
     Rule is the stable metadata for the unsafe boundary policy.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/sensitivesink
+## github.com/faustbrian/go-analysis/analyzers/sensitivesink
 
-package sensitivesink // import "github.com/faustbrian/golib/pkg/analysis/analyzers/sensitivesink"
+package sensitivesink // import "github.com/faustbrian/go-analysis/analyzers/sensitivesink"
 
 Package sensitivesink detects typed sensitive values passed to configured sinks.
 
@@ -1434,9 +1434,9 @@ type Sink struct {
     Sink identifies sensitive argument positions on one exact callable.
 
 
-## github.com/faustbrian/golib/pkg/analysis/analyzers/transactionrollback
+## github.com/faustbrian/go-analysis/analyzers/transactionrollback
 
-package transactionrollback // import "github.com/faustbrian/golib/pkg/analysis/analyzers/transactionrollback"
+package transactionrollback // import "github.com/faustbrian/go-analysis/analyzers/transactionrollback"
 
 Package transactionrollback enforces immediate rollback ownership for configured
 transaction constructors.
@@ -1487,9 +1487,9 @@ type Transaction struct {
     contract.
 
 
-## github.com/faustbrian/golib/pkg/analysis/policy
+## github.com/faustbrian/go-analysis/policy
 
-package policy // import "github.com/faustbrian/golib/pkg/analysis/policy"
+package policy // import "github.com/faustbrian/go-analysis/policy"
 
 Package policy owns rule governance and deterministic inventories.
 

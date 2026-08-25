@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	shared "github.com/faustbrian/golib/pkg/analysis/analysis"
+	shared "github.com/faustbrian/go-analysis/analysis"
 )
 
 func TestParseSuppressionsCreatesAuditableNarrowInventory(t *testing.T) {

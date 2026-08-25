@@ -1,4 +1,4 @@
-module github.com/faustbrian/golib/pkg/analysis
+module github.com/faustbrian/go-analysis
 
 go 1.26.6
 

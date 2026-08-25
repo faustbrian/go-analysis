@@ -3,7 +3,7 @@ package forbiddenapi_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/forbiddenapi"
+	"github.com/faustbrian/go-analysis/analyzers/forbiddenapi"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

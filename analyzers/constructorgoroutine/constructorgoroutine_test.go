@@ -3,7 +3,7 @@ package constructorgoroutine_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/constructorgoroutine"
+	"github.com/faustbrian/go-analysis/analyzers/constructorgoroutine"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

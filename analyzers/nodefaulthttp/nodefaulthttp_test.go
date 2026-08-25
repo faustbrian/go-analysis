@@ -3,7 +3,7 @@ package nodefaulthttp_test
 import (
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/analysis/analyzers/nodefaulthttp"
+	"github.com/faustbrian/go-analysis/analyzers/nodefaulthttp"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
