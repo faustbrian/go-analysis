@@ -32,7 +32,7 @@ semantic versioning; compatibility decisions are described in
 
 ### Documentation
 
-- Link the package README to the repository-wide Golib documentation portal.
+- Link the package README to package-owned documentation.
 
 ### Distribution
 
