@@ -29,7 +29,7 @@ Project references:
 - [complete rule catalog](docs/rules.md)
 - [command, API, SARIF, and performance reference](docs/reference.md)
 - [rule governance and conflict matrix](docs/governance.md)
-- [organization hardening evidence](docs/hardening.md)
+- [rule assurance and corpus evidence](docs/corpus.md)
 - [repository rollout and advisory promotion](docs/rollout.md)
 - [corpus precision and performance](docs/corpus.md)
 - [release process](docs/release.md)
@@ -415,7 +415,7 @@ or claim ownership, borrow, or data-race proof. NilAway remains separately
 pinned and advisory; its exit status must not be hidden when reports are later
 normalized.
 
-## Ecosystem
+## Documentation
 
-Use the [Golib documentation portal](https://github.com/faustbrian/golib/blob/main/docs/index.md)
-to choose companion packages, supported stacks, recipes, and operations guidance.
+Start with the [documentation index](docs/README.md) for rule design,
+configuration, rollout, security, compatibility, and maintenance guidance.

@@ -1,10 +1,15 @@
 # Changelog
 
 All notable changes to this project are documented here. The project follows
-semantic versioning after v1; pre-v1 compatibility decisions are described in
+semantic versioning; compatibility decisions are described in
 [the compatibility policy](docs/compatibility.md).
 
 ## Unreleased
+
+### Documentation
+
+- Replace release-process evidence and archived monorepo links with a
+  package-owned documentation index.
 
 ## 1.0.0 - 2026-08-25
 
