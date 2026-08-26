@@ -3,6 +3,7 @@
 ## Getting started
 
 - [Command and API reference](reference.md)
+- [Configuration](configuration.md)
 - [Custom rules](custom-rules.md)
 
 ## Concepts and design
