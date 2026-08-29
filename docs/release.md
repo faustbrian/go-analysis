@@ -3,18 +3,16 @@
 ## Local candidate verification
 
 Install the exact stable patch release recorded in `.go-version`. `make check`
-fails before analysis when the active `go env GOVERSION` differs, and workflow
-policy requires every CI and release setup step to consume the same file.
+delegates to the pinned shared tooling contract, which checks the active Go
+toolchain before analysis. `make workflows` validates the pinned workflow.
 
 Choose a semantic version without a leading `v`, update the changelog and any
 rule `introduced_version` metadata, then run:
 
 ```sh
 make check
-make race
-make benchmark
-make nilaway
-make release-verify VERSION=0.1.0
+make ci
+golib release check
 ```
 
 `release-verify` packages the candidate twice and compares every byte. It
@@ -26,8 +24,7 @@ contents, and the host executable's reported version.
 To inspect a candidate without publishing it, use an empty output directory:
 
 ```sh
-make release VERSION=0.1.0 DIST_DIR=dist
-shasum -a 256 -c dist/checksums.txt
+golib release dry-run
 ```
 
 The release command refuses invalid semantic versions and non-empty output
@@ -39,7 +36,7 @@ before checksums are created.
 
 After local verification and review, a maintainer may create a signed
 `vX.Y.Z` tag pointing at the exact candidate commit. The tag-triggered release
-workflow repeats `make check`, race tests, and release verification before its
+workflow repeats the shared release checks and package-specific verification before its
 publish job receives `contents: write`. All earlier steps retain read-only
 contents permission. The publish job builds the same archives and creates the
 GitHub release with `checksums.txt`.

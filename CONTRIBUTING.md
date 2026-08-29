@@ -18,6 +18,11 @@ New direct dependencies and dependency updates must follow the
 [dependency governance policy](AGENTS.md#dependencies-and-supply-chain). Package-local
 update bots are forbidden; the root policy owns every module and action update.
 
+Repository verification is configured in [`.golib.yaml`](.golib.yaml) and the
+workflow is pinned to the same released `go-library-tools` version. Use
+`make inventory` to inspect the manifests, `golib config validate` to validate
+the contract, and `make workflows` to validate the workflow locally.
+
 Specification-backed changes must follow the
 [specification governance contract](AGENTS.md#design), update
 the affected stable decision entries, and complete the Specification Decisions

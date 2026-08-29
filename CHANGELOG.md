@@ -6,6 +6,12 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+### Changed
+
+- Replace copied repository tooling with the pinned `go-library-tools` v1.0.4
+  contract while retaining package-owned policy, compatibility snapshots,
+  corpus fixtures, and mutation evidence.
+
 ### Documentation
 
 - Replace release-process evidence and archived monorepo links with a

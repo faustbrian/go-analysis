@@ -56,7 +56,7 @@ gates continue to run the enabled gosec integration in the pinned
 golangci-lint binary and the separately pinned govulncheck command without
 hiding either authority behind this project's diagnostics.
 
-`make workflow-policy` tests and enforces the workflow trust boundary locally.
+`make workflows` tests and enforces the workflow trust boundary locally.
 Every external action must use a full commit SHA, every workflow must default
 to read-only contents, and the only write scopes are CodeQL security results
 and tagged-release publication in their dedicated jobs.

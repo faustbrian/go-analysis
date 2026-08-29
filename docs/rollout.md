@@ -18,8 +18,9 @@ differences must not change policy-relative path behavior.
 
 When an organization owns canonical policy in another repository, consumers
 MUST use a reproducible sync or drift check. Silently copied YAML is forbidden.
-Use `make policy-update CANONICAL_POLICY=<path>` to synchronize the default
-`analysis.yml`, and run `make policy-check CANONICAL_POLICY=<path>` locally
+Use `golib-analysis sync-policy update <canonical> analysis.yml` to synchronize
+the default `analysis.yml`, and run `golib-analysis sync-policy check <canonical>
+analysis.yml` locally
 and in CI. Set `LOCAL_POLICY=<path>` for a different checked-in destination.
 The check validates the canonical policy and compares exact bytes. The
 consuming repository SHOULD also record the canonical policy revision beside

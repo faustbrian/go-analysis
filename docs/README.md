@@ -11,6 +11,7 @@
 - [Rule catalog](rules.md)
 - [Governance](governance.md)
 - [Corpus assurance](corpus.md)
+- [Organization hardening evidence](hardening.md)
 
 ## Operations and security
 

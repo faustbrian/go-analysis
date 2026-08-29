@@ -26,9 +26,9 @@ policy validation without loading target packages. Success prints
 policy and requires the local policy to be byte-identical. Drift and missing
 files fail the command. `sync-policy update` validates the same canonical file
 before copying its exact bytes to the local path. Neither mode uses the network,
-loads plugins, or executes configuration. `make policy-check` and
-`make policy-update` expose the same workflow through `CANONICAL_POLICY` and
-optional `LOCAL_POLICY` variables.
+loads plugins, or executes configuration. The repository Makefile delegates
+verification to the shared tooling contract; policy synchronization remains an
+explicit `golib-analysis` command.
 
 `golib-analysis rules` writes the stable JSON inventory of rules, owners, metadata,
 configuration properties, and overlap decisions. It accepts no arguments.
@@ -118,14 +118,15 @@ errors; declaration order never establishes precedence.
 
 ## Performance and determinism
 
-Run `make benchmark` for per-analyzer, aggregate, and 1,000-diagnostic JSON and
+Run `go test -bench=. ./analysis ./analysistestkit` for per-analyzer, aggregate, and 1,000-diagnostic JSON and
 SARIF nanoseconds, bytes, and allocations. Run it on the same machine and Go
 version when comparing changes.
 Per-analyzer and aggregate allocation budgets run without race or coverage
 instrumentation, both of which change allocation accounting. Every shipped
 analyzer must have an explicit budget. The ordinary test phase enforces those
-budgets before instrumented coverage starts, while `make race` independently
-proves race safety. `make performance` additionally enforces manifest budgets
+budgets before instrumented coverage starts, while the shared race gate
+independently proves race safety. `./scripts/performance.sh corpus/performance.tsv`
+additionally enforces manifest budgets
 for cold and warm wall time and peak resident memory and writes the observation
 to `.build/performance.tsv`. Organization policy should cover representative
 small, large-library, and service modules.
@@ -134,10 +135,11 @@ Run the same check concurrently and with `-sequential` when investigating
 nondeterminism. Reports sort rules, diagnostics, suppressions, and exceptions;
 configuration maps and package scheduling must not affect bytes emitted.
 
-Run `make compatibility` to compare exported Go documentation and the complete
+Run `golib api check` to compare exported Go documentation and the complete
 rule inventory with the reviewed files under `compat`. Intentional public
-changes require `make compatibility-update`, review of both diffs, compatibility
-guidance, and a version decision. Run `make reproducible` to build the
+changes require `./scripts/compatibility.sh update`, review of both diffs,
+compatibility guidance, and a version decision. Run
+`./scripts/reproducible-build.sh` to build the
 CGO-disabled, trimpath release binary twice and compare its bytes; the command
 prints the resulting SHA-256 checksum.
 

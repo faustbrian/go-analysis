@@ -21,7 +21,16 @@ The v1 API is stable. Every shipped rule is advisory by default until corpus
 evidence supports an explicit blocking promotion.
 
 Use the [documentation index](docs/README.md) for configuration, rule design,
-rollout, security, compatibility, and maintenance guidance.
+rollout, security, compatibility, and maintenance guidance. The package-owned
+guides are [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md),
+[changelog](CHANGELOG.md), [complete rule catalog](docs/rules.md),
+[command, API, SARIF, and performance reference](docs/reference.md),
+[rule governance and conflict matrix](docs/governance.md),
+[organization hardening evidence](docs/hardening.md),
+[repository rollout and advisory promotion](docs/rollout.md),
+[corpus precision and performance](docs/corpus.md),
+[release process](docs/release.md), [compatibility policy](docs/compatibility.md),
+[custom-rule design](docs/custom-rules.md), and [FAQ](docs/faq.md).
 
 ## Requirements
 
@@ -33,7 +42,8 @@ rollout, security, compatibility, and maintenance guidance.
 Build the pinned local binary:
 
 ```sh
-make build
+mkdir -p .build
+go build -trimpath -o .build/golib-analysis ./cmd/golib-analysis
 ```
 
 ### Standalone analyzer
@@ -58,8 +68,10 @@ When policy is owned in a canonical checkout, synchronize it explicitly and
 make drift a local and CI failure:
 
 ```sh
-make policy-update CANONICAL_POLICY=../mono/policies/service.yml
-make policy-check CANONICAL_POLICY=../mono/policies/service.yml
+./.build/golib-analysis sync-policy update \
+  ../mono/policies/service.yml analysis.yml
+./.build/golib-analysis sync-policy check \
+  ../mono/policies/service.yml analysis.yml
 ```
 
 `LOCAL_POLICY` defaults to `analysis.yml`. Both commands are offline. The
