@@ -1,6 +1,7 @@
 # Corpus precision and performance
 
-`make corpus` runs every entry in `corpus/manifest.tsv` as a complete module,
+`./scripts/corpus.sh check corpus/manifest.tsv` runs every entry in
+`corpus/manifest.tsv` as a complete module,
 once with normal package parallelism and once with `-sequential`. The reports
 must be byte-identical and must match the reviewed JSON baseline. A blocking
 finding, analyzer failure, nondeterministic report, missing baseline, malformed
@@ -24,7 +25,7 @@ policy checkout. Policy and baseline fields are resolved from those explicit
 roots, independent of the invocation directory:
 
 ```sh
-make build
+go build -trimpath -o .build/golib-analysis ./cmd/golib-analysis
 CORPUS_MODULE_ROOT=/workspace/repos \
 CORPUS_POLICY_ROOT=/workspace/policy \
 CORPUS_BASELINE_ROOT=/workspace/policy \
@@ -58,7 +59,8 @@ and warm wall time, and peak memory for the complete corpus. Representative
 small, library, and service measurements remain useful for attributing a
 full-corpus regression to a repository class.
 
-`make performance` enforces those measurements for the checked-in OSS corpus.
+`./scripts/performance.sh corpus/performance.tsv` enforces those measurements
+for the checked-in OSS corpus.
 Its six-column tab-separated manifest names the module, policy, maximum cold
 and warm milliseconds, and maximum peak resident KiB. The first invocation is
 the cold observation and the immediately repeated invocation is the warm
@@ -80,7 +82,7 @@ Budget increases require the same explicit review as changed report baselines.
 
 ## Complete owned-repository evidence
 
-`make owned-corpus` discovers every direct `go-*` module beside this checkout,
+`./scripts/owned_corpus.sh` discovers every direct `go-*` module beside this checkout,
 uses the empty advisory policy unless `OWNED_CORPUS_POLICY` names another exact
 policy, and writes private evidence beneath `.build/owned-corpus`. The gate
 runs every module in parallel and sequential modes, records reviewed report
@@ -99,7 +101,7 @@ live elsewhere:
 OWNED_CORPUS_ROOT=/workspace/repos \
 OWNED_CORPUS_POLICY=/workspace/policy/advisory.yml \
 OWNED_CORPUS_EVIDENCE_ROOT=/workspace/evidence/analysis \
-  make owned-corpus
+  ./scripts/owned_corpus.sh
 ```
 
 The evidence directory contains `manifest.tsv`, `revisions.tsv`,
@@ -119,5 +121,5 @@ then proves those listed committed revisions without observing or modifying
 concurrent uncommitted work:
 
 ```sh
-OWNED_CORPUS_SOURCE=head make owned-corpus
+OWNED_CORPUS_SOURCE=head ./scripts/owned_corpus.sh
 ```

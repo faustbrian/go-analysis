@@ -43,13 +43,13 @@ fi
 for artifact in public-api.txt rules.json; do
 	if [ ! -f "$baseline_dir/$artifact" ]; then
 		printf 'compatibility baseline missing: compat/%s\n' "$artifact" >&2
-		printf 'run make compatibility-update after reviewing the public contract\n' >&2
+	printf 'run ./scripts/compatibility.sh update after reviewing the public contract\n' >&2
 		exit 1
 	fi
 	if [ "$artifact" = rules.json ]; then
 		if ! cmp -s "$baseline_dir/$artifact" "$temporary/$artifact"; then
 			printf 'rule inventory differs from compat/rules.json\n' >&2
-			printf 'run make compatibility-update and review the rule metadata change\n' >&2
+		printf 'run ./scripts/compatibility.sh update and review the rule metadata change\n' >&2
 			exit 1
 		fi
 		continue

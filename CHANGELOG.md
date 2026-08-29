@@ -1,10 +1,21 @@
 # Changelog
 
 All notable changes to this project are documented here. The project follows
-semantic versioning after v1; pre-v1 compatibility decisions are described in
+semantic versioning; compatibility decisions are described in
 [the compatibility policy](docs/compatibility.md).
 
 ## Unreleased
+
+### Changed
+
+- Replace copied repository tooling with the pinned `go-library-tools` v1.0.5
+  contract while retaining package-owned policy, compatibility snapshots,
+  corpus fixtures, and mutation evidence.
+
+### Documentation
+
+- Replace release-process evidence and archived monorepo links with a
+  package-owned documentation index.
 
 ## 1.0.0 - 2026-08-25
 
@@ -27,7 +38,7 @@ semantic versioning after v1; pre-v1 compatibility decisions are described in
 
 ### Documentation
 
-- Link the package README to the repository-wide Golib documentation portal.
+- Link the package README to package-owned documentation.
 
 ### Distribution
 

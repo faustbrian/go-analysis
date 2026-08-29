@@ -27,7 +27,7 @@ case "$manifest" in
 	*) manifest_path="$root/$manifest" ;;
 esac
 if [ ! -x "$binary" ]; then
-	printf 'corpus runner requires .build/golib-analysis; run make build\n' >&2
+	printf 'corpus runner requires .build/golib-analysis; build ./cmd/golib-analysis first\n' >&2
 	exit 1
 fi
 if [ ! -f "$manifest_path" ]; then
@@ -169,7 +169,7 @@ while IFS="$tab" read -r name module policy baseline extra; do
 	fi
 	if ! cmp -s "$baseline_path" "$parallel"; then
 		printf 'corpus report drifted for %s\n' "$name" >&2
-		printf 'run make corpus-update only after classifying every change\n' >&2
+	printf 'run ./scripts/corpus.sh update only after classifying every change\n' >&2
 		exit 1
 	fi
 done < "$manifest_path"
