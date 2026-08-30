@@ -112,6 +112,47 @@ func TestRunDefaultsEmptyPatternsAndPreservesExplicitPatterns(t *testing.T) {
 	}
 }
 
+func TestRunValidatesAndNormalizesRootOverride(t *testing.T) {
+	t.Parallel()
+
+	config := writeInternalPolicy(t, "version: 1\n")
+	dependencies := dependencies{
+		registry: policy.Builtin,
+		load: func(*packages.Config, ...string) ([]*packages.Package, error) {
+			return []*packages.Package{{PkgPath: "example.com/p"}}, nil
+		},
+		analyze: func([]*toolanalysis.Analyzer, []*packages.Package, *checker.Options) (*checker.Graph, error) {
+			return &checker.Graph{}, nil
+		},
+		now:      time.Now,
+		relative: repositoryPath,
+	}
+	if _, err := run(
+		context.Background(),
+		Options{ConfigPath: config, Root: "relative"},
+		dependencies,
+	); err == nil || err.Error() != "analysis root must be absolute" {
+		t.Fatalf("run(relative root) error = %v", err)
+	}
+
+	root := t.TempDir() + string(os.PathSeparator) + "nested" + string(os.PathSeparator) + ".."
+	var loadedRoot string
+	dependencies.load = func(config *packages.Config, _ ...string) ([]*packages.Package, error) {
+		loadedRoot = config.Dir
+		return []*packages.Package{{PkgPath: "example.com/p"}}, nil
+	}
+	if _, err := run(
+		context.Background(),
+		Options{ConfigPath: config, Root: root},
+		dependencies,
+	); err != nil {
+		t.Fatalf("run(absolute root) error = %v", err)
+	}
+	if loadedRoot != filepath.Clean(root) {
+		t.Fatalf("loaded root = %q, want %q", loadedRoot, filepath.Clean(root))
+	}
+}
+
 func TestRunLoadsTargetSyntaxWithoutDependencySyntax(t *testing.T) {
 	t.Parallel()
 

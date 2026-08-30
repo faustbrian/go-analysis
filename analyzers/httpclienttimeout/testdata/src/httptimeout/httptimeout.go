@@ -17,6 +17,8 @@ func clients(timeout time.Duration) {
 	_ = zero
 	var pointer *httpalias.Client
 	_ = pointer
+	var inferred = 1
+	_ = inferred
 
 	type LocalClient httpalias.Client
 	_ = &LocalClient{}
