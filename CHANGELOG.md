@@ -8,7 +8,7 @@ semantic versioning; compatibility decisions are described in
 
 ### Changed
 
-- Replace copied repository tooling with the pinned `go-library-tools` v1.0.5
+- Replace copied repository tooling with the pinned `go-library-tools` v1.0.13
   contract while retaining package-owned policy, compatibility snapshots,
   corpus fixtures, and mutation evidence.
 
