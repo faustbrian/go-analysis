@@ -3,6 +3,8 @@
 The public compatibility surface includes rule IDs and trigger semantics,
 metadata and owners, configuration keys and validation, suppression syntax,
 JSON and SARIF fields, command arguments and exit codes, and exported Go APIs.
+The [SARIF specification decision register](specification-decisions.md)
+governs the standard-backed portion of that surface.
 
 Semantic versioning governs releases: additive
 rules and optional fields are minor changes, compatible fixes are patch changes,

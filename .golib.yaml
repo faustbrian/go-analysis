@@ -39,6 +39,21 @@ operations:
         target: docs
         timeout: 20m
   - module: "."
+    gate: conformance
+    steps:
+      - type: go-test
+        packages:
+          - ./analysis
+        run: '^TestWriteSARIFIncludesStableRulesAndNoSource$|^TestWritersEncodeEmptyInventoriesAsArrays$|^TestWritersRejectPathsThatCouldExposeWorkspace$'
+        count: 1
+        timeout: 20m
+      - type: go-test
+        packages:
+          - ./cmd/golib-analysis
+        run: '^TestRunCheckEmitsSARIFForAdvisoryFinding$'
+        count: 1
+        timeout: 20m
+  - module: "."
     gate: fuzz
     steps:
       - type: go-test

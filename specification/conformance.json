@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "decisions": [
+    {
+      "id": "ANALYSIS-SARIF-DEC-001",
+      "authoritative_sources": ["oasis-sarif-source"],
+      "executable_evidence": ["TestWriteSARIFIncludesStableRulesAndNoSource", "TestWritersEncodeEmptyInventoriesAsArrays", "TestRunCheckEmitsSARIFForAdvisoryFinding"],
+      "fixtures": [],
+      "fuzz": ["FuzzReportWriters"],
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": ["`analysis.WriteSARIF` and `golib-analysis check -format sarif` emit one deterministic SARIF 2.1.0 run with the established SchemaStore URI."]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-002",
+      "authoritative_sources": ["oasis-sarif-source"],
+      "executable_evidence": ["TestWriteSARIFIncludesStableRulesAndNoSource"],
+      "fixtures": [],
+      "fuzz": ["FuzzReportWriters"],
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": ["SARIF runs contain deterministic tool and governed rule descriptors without source-derived metadata."]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-003",
+      "authoritative_sources": ["oasis-sarif-source"],
+      "executable_evidence": ["TestWriteSARIFIncludesStableRulesAndNoSource"],
+      "fixtures": [],
+      "fuzz": ["FuzzReportWriters"],
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": ["Every result retains its rule ID and maps package severity to an explicit SARIF level with a warning fallback for missing descriptors."]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-004",
+      "authoritative_sources": ["oasis-sarif-source"],
+      "executable_evidence": ["TestWriteSARIFIncludesStableRulesAndNoSource", "TestWritersRejectPathsThatCouldExposeWorkspace", "TestRunCheckEmitsSARIFForAdvisoryFinding"],
+      "fixtures": [],
+      "fuzz": ["FuzzReportWriters"],
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": ["Command output uses repository-relative locations and omits source snippets; direct callers must supply SARIF-valid positions."]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-005",
+      "authoritative_sources": ["oasis-sarif-source"],
+      "executable_evidence": ["TestWriteSARIFIncludesStableRulesAndNoSource", "TestWritersEncodeEmptyInventoriesAsArrays"],
+      "fixtures": [],
+      "fuzz": ["FuzzReportWriters"],
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": ["Run property-bag extensions retain complete exception and suppression inventories without synthesizing result suppressions."]
+    }
+  ]
+}

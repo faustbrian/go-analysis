@@ -159,12 +159,14 @@ func TestWriteSARIFIncludesStableRulesAndNoSource(t *testing.T) {
 			},
 			{ID: "context/no-background", Severity: shared.SeverityWarning},
 			{ID: "api/broad-interface", Severity: shared.SeverityInfo},
+			{ID: "unknown/severity", Severity: shared.Severity("unexpected")},
 		},
 		Diagnostics: []shared.Diagnostic{
 			{Rule: "security/no-unsafe", Filename: "internal/unsafe.go", Line: 4, Column: 2, Message: "unsafe import"},
 			{Rule: "context/no-background", Filename: "context.go", Line: 2, Message: "context"},
 			{Rule: "api/broad-interface", Filename: "api.go", Line: 3, Message: "interface"},
 			{Rule: "unknown/rule", Filename: "unknown.go", Line: 1, Message: "unknown"},
+			{Rule: "unknown/severity", Filename: "severity.go", Line: 1, Message: "severity"},
 		},
 		Exceptions: []shared.PolicyException{{
 			Rule: "security/no-unsafe", Package: "example.com/service", Used: true,
@@ -187,26 +189,82 @@ func TestWriteSARIFIncludesStableRulesAndNoSource(t *testing.T) {
 	if document["version"] != "2.1.0" {
 		t.Fatalf("SARIF version = %#v", document["version"])
 	}
+	if document["$schema"] != "https://json.schemastore.org/sarif-2.1.0.json" {
+		t.Fatalf("SARIF schema = %#v", document["$schema"])
+	}
 	runs := document["runs"].([]any)
-	properties := runs[0].(map[string]any)["properties"].(map[string]any)
+	if len(runs) != 1 {
+		t.Fatalf("SARIF runs = %#v", runs)
+	}
+	run := runs[0].(map[string]any)
+	driver := run["tool"].(map[string]any)["driver"].(map[string]any)
+	if driver["name"] != "analysis" || driver["version"] != "0.1.0" ||
+		driver["informationUri"] != "https://github.com/faustbrian/go-analysis" {
+		t.Fatalf("SARIF driver = %#v", driver)
+	}
+	descriptors := driver["rules"].([]any)
+	if len(descriptors) != 4 {
+		t.Fatalf("SARIF rule descriptors = %#v", descriptors)
+	}
+	wantRuleIDs := []string{
+		"api/broad-interface",
+		"context/no-background",
+		"security/no-unsafe",
+		"unknown/severity",
+	}
+	for index, raw := range descriptors {
+		if got := raw.(map[string]any)["id"]; got != wantRuleIDs[index] {
+			t.Fatalf("SARIF rule descriptor %d ID = %#v, want %q", index, got, wantRuleIDs[index])
+		}
+	}
+	securityDescriptor := descriptors[2].(map[string]any)
+	securityProperties := securityDescriptor["properties"].(map[string]any)
+	if securityDescriptor["shortDescription"].(map[string]any)["text"] != "Unsafe bypasses language guarantees." ||
+		securityDescriptor["help"].(map[string]any)["text"] != "Use a safe API." ||
+		securityProperties["category"] != "security" ||
+		securityProperties["severity"] != "error" ||
+		securityProperties["defaultStatus"] != "advisory" ||
+		securityProperties["introducedVersion"] != "0.1.0" {
+		t.Fatalf("SARIF security descriptor = %#v", securityDescriptor)
+	}
+	properties := run["properties"].(map[string]any)
 	if len(properties["exceptions"].([]any)) != 1 ||
 		len(properties["suppressions"].([]any)) != 1 {
 		t.Fatalf("SARIF inventory properties = %#v", properties)
 	}
 	results := runs[0].(map[string]any)["results"].([]any)
-	foundUnknown := false
+	wantLevels := map[string]string{
+		"security/no-unsafe":    "error",
+		"context/no-background": "warning",
+		"api/broad-interface":   "note",
+		"unknown/rule":          "warning",
+		"unknown/severity":      "note",
+	}
 	for _, raw := range results {
 		result := raw.(map[string]any)
-		if result["ruleId"] != "unknown/rule" {
-			continue
+		ruleID := result["ruleId"].(string)
+		want, exists := wantLevels[ruleID]
+		if !exists {
+			t.Fatalf("unexpected SARIF rule = %q", ruleID)
 		}
-		foundUnknown = true
-		if result["level"] != "warning" {
-			t.Fatalf("unknown rule level = %#v, want warning", result["level"])
+		if result["level"] != want {
+			t.Errorf("SARIF level for %s = %#v, want %q", ruleID, result["level"], want)
 		}
+		delete(wantLevels, ruleID)
 	}
-	if !foundUnknown {
-		t.Fatal("SARIF results omitted unknown rule")
+	if len(wantLevels) != 0 {
+		t.Fatalf("SARIF results omitted rules = %#v", wantLevels)
+	}
+	first := results[0].(map[string]any)
+	locations := first["locations"].([]any)
+	physical := locations[0].(map[string]any)["physicalLocation"].(map[string]any)
+	artifact := physical["artifactLocation"].(map[string]any)
+	region := physical["region"].(map[string]any)
+	if artifact["uri"] != "api.go" || region["startLine"] != float64(3) {
+		t.Fatalf("first SARIF location = %#v", physical)
+	}
+	if len(locations) != 1 || region["startColumn"] != nil {
+		t.Fatalf("first SARIF location shape = %#v", physical)
 	}
 }
 

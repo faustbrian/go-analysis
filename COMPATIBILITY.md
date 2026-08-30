@@ -16,3 +16,8 @@ defaults. A compile-compatible change can still be behaviorally breaking.
 Specification-backed modules MUST NOT diverge from their declared standards.
 Ambiguities require documented decisions and stable tests. Deprecated APIs
 follow [`DEPRECATION.md`](DEPRECATION.md).
+
+The root module's observable SARIF profile is governed by the
+[specification decision register](docs/specification-decisions.md). A changed
+decision, wire field, schema identity, or location policy requires compatibility
+review even when the exported Go API is unchanged.

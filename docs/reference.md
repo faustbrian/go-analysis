@@ -63,6 +63,9 @@ driver descriptors; diagnostic severity maps to SARIF level; exceptions and
 suppressions remain run properties for audit. Artifact URIs are
 repository-relative and use forward slashes. Paths that escape the report root
 are rejected rather than exposed.
+The exact supported profile, maintained-peer differences, and direct-call
+position precondition are recorded in the
+[SARIF specification decision register](specification-decisions.md).
 
 For CI, write SARIF to a file and let the CI platform upload it:
 

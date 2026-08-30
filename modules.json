@@ -365,16 +365,24 @@
       "build_tags": [],
       "test_tags": [],
       "interoperability_tools": [],
-      "specifications": [],
-      "conformance_corpora": [],
-      "provenance": [],
+      "specifications": [
+        "OASIS SARIF 2.1.0"
+      ],
+      "conformance_corpora": [
+        "SARIF decision, writer, command, path-safety, empty-output, and fuzz evidence",
+        "Pinned golangci-lint v2.13.2 and gosec v2.29.0 peer profiles"
+      ],
+      "provenance": [
+        "specification/manifest.tsv",
+        "specification/maintained-peers.json"
+      ],
       "goal_files": [],
       "goal_status": "not-applicable",
       "goal_evidence": [],
       "gates": {
         "api_compatibility": true,
         "benchmarks": true,
-        "conformance": false,
+        "conformance": true,
         "coverage": true,
         "documentation": true,
         "fuzz": true,

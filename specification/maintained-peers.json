@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-30",
+  "peers": [
+    {
+      "id": "golangci-lint",
+      "version": "v2.13.2",
+      "source": "https://raw.githubusercontent.com/golangci/golangci-lint/v2.13.2/pkg/printers/sarif.go",
+      "source_sha256": "d4e687f4b40a5cf6d12f3e01d6db3a64677fe6d718c02891f2da3bd557daceed",
+      "observed_behavior": {
+        "document": "Emits version 2.1.0 with a SchemaStore schema URI and one run.",
+        "rules": "Emits the driver name without a rules inventory.",
+        "severity": "Sanitizes to SARIF none, note, warning, or error and defaults unknown severity to error.",
+        "locations": "Emits a relative issue path, line, and a start column clamped to at least one without a snippet.",
+        "suppressions": "Does not emit a policy suppression inventory."
+      }
+    },
+    {
+      "id": "gosec",
+      "version": "v2.29.0",
+      "source": "https://raw.githubusercontent.com/securego/gosec/v2.29.0/report/sarif/formatter.go",
+      "source_sha256": "5209f242b276ceaf56fd094896e1163903db1dfef7b84c5b6251b3c5bdb056a1",
+      "identity_source": "https://raw.githubusercontent.com/securego/gosec/v2.29.0/report/sarif/data.go",
+      "identity_source_sha256": "d528ee71c97a33c6abc519e63e3ef1eba35bcb0f1954c978f70d9f14a23fe2b4",
+      "observed_behavior": {
+        "document": "Emits version 2.1.0 with the oasis-tcs schema mirror and one run.",
+        "rules": "Emits reporting descriptors, tool version, semantic version, and taxonomies.",
+        "severity": "Maps high to error, medium to warning, and low to note.",
+        "locations": "Emits source regions and snippets.",
+        "suppressions": "Uses the standard result suppressions array for finding-specific suppressions."
+      }
+    }
+  ],
+  "local_profile": {
+    "document": "Emits version 2.1.0 with a SchemaStore schema URI and one run.",
+    "rules": "Emits deterministic rule descriptors and governed rule metadata.",
+    "severity": "Maps error to error, warning to warning, info to note, and unknown rules to warning.",
+    "locations": "Emits repository-relative paths and source positions without snippets.",
+    "suppressions": "Retains policy exceptions and source suppressions as run property-bag extensions rather than result suppressions."
+  },
+  "classification": "deliberate policy difference"
+}
