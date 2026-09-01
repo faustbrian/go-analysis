@@ -8,9 +8,10 @@ semantic versioning; compatibility decisions are described in
 
 ### Changed
 
-- Replace copied repository tooling with the pinned `go-library-tools` v1.0.13
-  contract while retaining package-owned policy, compatibility snapshots,
-  corpus fixtures, and mutation evidence.
+- Adopt the pinned `go-library-tools` v1.2.0 CLI and reusable workflow so CI
+  enforces specification decisions, conformance bindings, source monitoring,
+  and change control while retaining package-owned policy, compatibility
+  snapshots, corpus fixtures, and mutation evidence.
 
 ### Documentation
 
