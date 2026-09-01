@@ -10,6 +10,7 @@
 
 - [Rule catalog](rules.md)
 - [Governance](governance.md)
+- [SARIF specification decisions](specification-decisions.md)
 - [Corpus assurance](corpus.md)
 - [Organization hardening evidence](hardening.md)
 

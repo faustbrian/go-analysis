@@ -8,11 +8,25 @@ semantic versioning; compatibility decisions are described in
 
 ### Changed
 
-- Replace copied repository tooling with the pinned `go-library-tools` v1.0.13
-  contract while retaining package-owned policy, compatibility snapshots,
-  corpus fixtures, and mutation evidence.
+- Adopt the pinned `go-library-tools` v1.2.0 CLI and reusable workflow so CI
+  enforces specification decisions, conformance bindings, source monitoring,
+  and change control while retaining package-owned policy, compatibility
+  snapshots, corpus fixtures, and mutation evidence.
 
 ### Documentation
+
+- Register the root module as an OASIS SARIF 2.1.0 output producer with pinned
+  specification, Errata 01, official-schema, and maintained-peer sources. The
+  [specification decision register](docs/specification-decisions.md) now
+  governs document identity, descriptors, severity, locations, and policy
+  inventory extensions. CI uses the immutable shared specification checker and
+  runs the focused SARIF conformance lane.
+
+  - ANALYSIS-SARIF-DEC-001 sha256:17265c8ab7034c11c708246b57b5fbd3ae15036d0e59817e56cae4067efc8918
+  - ANALYSIS-SARIF-DEC-002 sha256:fa61314a23e203d86c1136f7aa5a1071fcebb2ab0b2ab63c8f11902f68d42ffe
+  - ANALYSIS-SARIF-DEC-003 sha256:ab6c926c60099de383141d45d915141b03e2311ecc76f8fe6d11faea14ea5842
+  - ANALYSIS-SARIF-DEC-004 sha256:ad94b169d618fe9b8aadd239070930af6f0f27be14e0f24ea92912d9256d3c25
+  - ANALYSIS-SARIF-DEC-005 sha256:15ead81793386cb7e6b123302e7b0a83e1c703f36834bbc12cf81f3479d63e82
 
 - Replace release-process evidence and archived monorepo links with a
   package-owned documentation index.

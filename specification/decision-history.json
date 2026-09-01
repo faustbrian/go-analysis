@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "ANALYSIS-SARIF-DEC-001",
+      "digests": ["17265c8ab7034c11c708246b57b5fbd3ae15036d0e59817e56cae4067efc8918"]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-002",
+      "digests": ["fa61314a23e203d86c1136f7aa5a1071fcebb2ab0b2ab63c8f11902f68d42ffe"]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-003",
+      "digests": ["ab6c926c60099de383141d45d915141b03e2311ecc76f8fe6d11faea14ea5842"]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-004",
+      "digests": ["ad94b169d618fe9b8aadd239070930af6f0f27be14e0f24ea92912d9256d3c25"]
+    },
+    {
+      "id": "ANALYSIS-SARIF-DEC-005",
+      "digests": ["15ead81793386cb7e6b123302e7b0a83e1c703f36834bbc12cf81f3479d63e82"]
+    }
+  ]
+}

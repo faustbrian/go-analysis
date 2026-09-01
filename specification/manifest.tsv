@@ -1,0 +1,7 @@
+id	version	sections	role	url	sha256	status
+oasis-sarif-2.1.0	OASIS-SARIF-2.1.0	all	normative-specification	https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.pdf	ab999958d7c5886ab79d00e2b45fe9621e1e7986491881e43aab62d5a2b9e4b7	pinned
+oasis-sarif-2.1.0-errata01	OASIS-SARIF-2.1.0-Errata-01	all	approved-errata	https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/sarif-v2.1.0-errata01-os-complete.pdf	26094d4ce0341a9e994df5a2875bdbf12198114e8dd3ef166171d117c5a96d63	pinned
+oasis-sarif-2.1.0-errata01-schema	OASIS-SARIF-2.1.0-Errata-01	all	official-json-schema	https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json	c3b4bb2d6093897483348925aaa73af03b3e3f4bd4ca38cef26dcb4212a2682e	pinned
+golangci-lint-sarif	golangci-lint-v2.13.2	pkg/printers/sarif.go	maintained-peer-source	https://raw.githubusercontent.com/golangci/golangci-lint/v2.13.2/pkg/printers/sarif.go	d4e687f4b40a5cf6d12f3e01d6db3a64677fe6d718c02891f2da3bd557daceed	pinned
+gosec-sarif-data	gosec-v2.29.0	report/sarif/data.go	maintained-peer-source	https://raw.githubusercontent.com/securego/gosec/v2.29.0/report/sarif/data.go	d528ee71c97a33c6abc519e63e3ef1eba35bcb0f1954c978f70d9f14a23fe2b4	pinned
+gosec-sarif-formatter	gosec-v2.29.0	report/sarif/formatter.go	maintained-peer-source	https://raw.githubusercontent.com/securego/gosec/v2.29.0/report/sarif/formatter.go	5209f242b276ceaf56fd094896e1163903db1dfef7b84c5b6251b3c5bdb056a1	pinned

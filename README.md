@@ -25,6 +25,7 @@ rollout, security, compatibility, and maintenance guidance. The package-owned
 guides are [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md),
 [changelog](CHANGELOG.md), [complete rule catalog](docs/rules.md),
 [command, API, SARIF, and performance reference](docs/reference.md),
+[SARIF specification decisions](docs/specification-decisions.md),
 [rule governance and conflict matrix](docs/governance.md),
 [organization hardening evidence](docs/hardening.md),
 [repository rollout and advisory promotion](docs/rollout.md),
