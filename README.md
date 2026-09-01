@@ -32,6 +32,8 @@ guides are [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md),
 [corpus precision and performance](docs/corpus.md),
 [release process](docs/release.md), [compatibility policy](docs/compatibility.md),
 [custom-rule design](docs/custom-rules.md), and [FAQ](docs/faq.md).
+Shared construction, ownership, lifecycle, and composition expectations follow
+the versioned [Golib ecosystem design language](https://github.com/faustbrian/go-library-tools/blob/v1.3.0/docs/ecosystem/README.md).
 
 ## Requirements
 
