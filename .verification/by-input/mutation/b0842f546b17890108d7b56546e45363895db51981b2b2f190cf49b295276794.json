@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/interfacenaming",
+  "gate": "mutation",
+  "input_digest": "sha256:b0842f546b17890108d7b56546e45363895db51981b2b2f190cf49b295276794",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:f44cd5a61b8cd44470b521f96ce2474ad58fa873347d5636882667eb2dfafe4e",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:48.06906Z"
+}

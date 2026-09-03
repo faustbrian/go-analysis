@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/nobackground",
+  "gate": "mutation",
+  "input_digest": "sha256:e4cad20bdaaa71052e262a8cd2da6cc355d06791ba0feec4866407cad2005dfb",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:2475500d388883ef3e20aad404022ae60f54e21dc7e3ef8727d3d3af562d87c2",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:49.027989Z"
+}

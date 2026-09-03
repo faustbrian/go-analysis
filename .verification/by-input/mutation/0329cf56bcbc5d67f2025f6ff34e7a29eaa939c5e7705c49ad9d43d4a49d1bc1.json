@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/sensitivesink",
+  "gate": "mutation",
+  "input_digest": "sha256:0329cf56bcbc5d67f2025f6ff34e7a29eaa939c5e7705c49ad9d43d4a49d1bc1",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:b467243097ba510536a7fd134c4aed509776b044123c5a94aed0c41d145b0f39",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:50.176643Z"
+}

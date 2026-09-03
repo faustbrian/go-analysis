@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/transactionrollback",
+  "gate": "mutation",
+  "input_digest": "sha256:fcac8c1262509cee07eb116d0f799b1934f7f8921e4dbceb011e4270e743d079",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:2bfdf7904ad66c5c85159f8944d54643cee5d9466ed291a03a44c6c6029c013b",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:50.365211Z"
+}

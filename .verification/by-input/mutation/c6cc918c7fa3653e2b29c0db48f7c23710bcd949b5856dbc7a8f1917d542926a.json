@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/backenderror",
+  "gate": "mutation",
+  "input_digest": "sha256:c6cc918c7fa3653e2b29c0db48f7c23710bcd949b5856dbc7a8f1917d542926a",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:2ca1cbc12fe2d1d5e21294ca742d1e425829f73da18fc0b7a7de09e78e87768f",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:46.416159Z"
+}
