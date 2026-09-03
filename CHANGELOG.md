@@ -8,19 +8,19 @@ semantic versioning; compatibility decisions are described in
 
 ### Changed
 
-- Adopt the checksum-verified `go-library-tools` v1.3.0 CLI, declare complete
+- Adopt the checksum-verified `go-library-tools` v1.4.0 CLI, declare complete
   schema-v2 cohesion metadata for the public analyzer suite, and expose the
   repository-local `make cohesion` validation target.
 
-- Pin the `go-library-tools` v1.3.0 reusable workflow so CI enforces
+- Pin the final W14 `go-library-tools` v1.4.0 reusable workflow so CI enforces
   specification decisions, conformance bindings, source monitoring, and change
   control while retaining package-owned policy, compatibility snapshots,
   corpus fixtures, and mutation evidence.
 
 ### Documentation
 
-- Link the public module to the versioned Golib ecosystem design language and
-  publish package-selection guidance through the cohesion catalog metadata.
+- Link the public module to the immutable v1.4.0 Golib ecosystem index and
+  Tooling family guidance, and publish package-selection metadata.
 
 - Register the root module as an OASIS SARIF 2.1.0 output producer with pinned
   specification, Errata 01, official-schema, and maintained-peer sources. The

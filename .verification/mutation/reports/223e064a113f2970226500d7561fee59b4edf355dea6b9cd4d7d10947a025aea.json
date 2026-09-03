@@ -1,0 +1,48 @@
+{
+    "go_module": "github.com/faustbrian/golib/pkg/analysis",
+    "files": [
+      {
+        "file_name": "noinit.go",
+        "mutations": [
+          {
+            "type": "INVERT_BITWISE",
+            "status": "KILLED",
+            "line": 45,
+            "column": 9
+          },
+          {
+            "type": "INVERT_LOGICAL",
+            "status": "KILLED",
+            "line": 55,
+            "column": 13
+          },
+          {
+            "type": "CONDITIONALS_NEGATION",
+            "status": "KILLED",
+            "line": 55,
+            "column": 35
+          },
+          {
+            "type": "INVERT_LOOPCTRL",
+            "status": "KILLED",
+            "line": 56,
+            "column": 7
+          }
+        ]
+      }
+    ],
+    "test_efficacy": 100,
+    "mutations_coverage": 100,
+    "mutants_total": 4,
+    "mutants_killed": 4,
+    "mutants_lived": 0,
+    "mutants_not_viable": 0,
+    "mutants_not_covered": 0,
+    "elapsed_time": 8.787087084,
+    "mutator_statistics": {
+      "conditionals_negation": 1,
+      "invert_bitwise": 1,
+      "invert_logical": 1,
+      "invert_loop_ctrl": 1
+    }
+  }

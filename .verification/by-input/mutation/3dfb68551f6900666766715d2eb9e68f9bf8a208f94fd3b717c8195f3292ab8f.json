@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/lockacrosscall",
+  "gate": "mutation",
+  "input_digest": "sha256:3dfb68551f6900666766715d2eb9e68f9bf8a208f94fd3b717c8195f3292ab8f",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:bef5b5b831968a48090f2e1d55e872c7be19e5b918ee3990fc1e3d0f6ed0a7f5",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:48.447628Z"
+}

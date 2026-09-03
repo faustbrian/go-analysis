@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/forbiddenapi",
+  "gate": "mutation",
+  "input_digest": "sha256:ec3670248e11eb7b57a9756d1f36b3ca6edc72f16ba4c644c18bf40ccc5b78df",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:242909d39b51c62e0879a267b637e85786ba23377d704b7934ead1851a4deed1",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-09-03T20:32:47.161175Z"
+}

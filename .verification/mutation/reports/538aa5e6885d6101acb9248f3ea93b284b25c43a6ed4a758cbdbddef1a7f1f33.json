@@ -1,0 +1,60 @@
+{
+    "go_module": "github.com/faustbrian/golib/pkg/analysis",
+    "files": [
+      {
+        "file_name": "globalgoroutine.go",
+        "mutations": [
+          {
+            "type": "INVERT_BITWISE",
+            "status": "KILLED",
+            "line": 26,
+            "column": 16
+          },
+          {
+            "type": "INVERT_LOGICAL",
+            "status": "KILLED",
+            "line": 36,
+            "column": 11
+          },
+          {
+            "type": "CONDITIONALS_NEGATION",
+            "status": "KILLED",
+            "line": 36,
+            "column": 25
+          },
+          {
+            "type": "INVERT_LOOPCTRL",
+            "status": "KILLED",
+            "line": 37,
+            "column": 5
+          },
+          {
+            "type": "INVERT_LOOPCTRL",
+            "status": "KILLED",
+            "line": 42,
+            "column": 6
+          },
+          {
+            "type": "CONDITIONALS_NEGATION",
+            "status": "KILLED",
+            "line": 66,
+            "column": 51
+          }
+        ]
+      }
+    ],
+    "test_efficacy": 100,
+    "mutations_coverage": 100,
+    "mutants_total": 6,
+    "mutants_killed": 6,
+    "mutants_lived": 0,
+    "mutants_not_viable": 0,
+    "mutants_not_covered": 0,
+    "elapsed_time": 2.776134375,
+    "mutator_statistics": {
+      "conditionals_negation": 2,
+      "invert_bitwise": 1,
+      "invert_logical": 1,
+      "invert_loop_ctrl": 2
+    }
+  }
