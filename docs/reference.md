@@ -79,8 +79,11 @@ cloud credentials.
 
 ## Public Go packages
 
-`analysis` is the reporting and policy model. `LoadConfig` strictly decodes a
-versioned file against known rule IDs. `ParseSuppressions`,
+`analysis` is the reporting and policy model. `LoadConfigContext` strictly
+decodes a versioned file against known rule IDs while observing caller
+cancellation before and between filesystem operations. The deprecated
+`LoadConfig` entry point remains as a context-free v1 compatibility wrapper.
+`ParseSuppressions`,
 `ApplySuppressions`, and `ApplyPolicyExceptions` implement the auditable
 exception pipeline. `WriteJSON` and `WriteSARIF` normalize and serialize a
 `Report`. `Rule`, `Diagnostic`, `Suppression`, configuration policy types, and

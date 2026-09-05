@@ -20,6 +20,27 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+func TestRunPropagatesCancellationToConfigurationLoad(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	packageLoadCalled := false
+	_, err := run(ctx, Options{ConfigPath: "missing.yml"}, dependencies{
+		registry: policy.Builtin,
+		load: func(*packages.Config, ...string) ([]*packages.Package, error) {
+			packageLoadCalled = true
+			return nil, nil
+		},
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("run() error = %v, want context cancellation", err)
+	}
+	if packageLoadCalled {
+		t.Fatal("package loading started after configuration cancellation")
+	}
+}
+
 func TestRunPropagatesSystemBoundaryFailures(t *testing.T) {
 	t.Parallel()
 

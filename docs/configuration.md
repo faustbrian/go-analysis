@@ -1,5 +1,13 @@
 # Configuration
 
+Applications load policy files with
+`analysis.LoadConfigContext(ctx, path, knownRules)`. Cancellation is observed
+before and between filesystem operations. The older `analysis.LoadConfig`
+entry point remains available for v1 compatibility but cannot accept a caller
+context and is deprecated.
+The replacement call and frozen support interval are recorded in
+[`DEPRECATION.md`](../DEPRECATION.md#analysisloadconfig).
+
 Configuration is strict YAML. Unknown fields, unknown rule IDs, multiple YAML
 documents, malformed analyzer policy, and unsupported versions are rejected.
 Paths and package patterns are resolved from the directory containing the

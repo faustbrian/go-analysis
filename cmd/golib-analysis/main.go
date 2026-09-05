@@ -44,17 +44,25 @@ import (
 const commandPackage = "github.com/faustbrian/go-analysis/cmd/golib-analysis"
 
 func main() {
-	runCommand(os.Args[1:], os.Stdout, os.Stderr, os.Exit, multichecker.Main)
+	runCommand(
+		context.Background(),
+		os.Args[1:],
+		os.Stdout,
+		os.Stderr,
+		os.Exit,
+		multichecker.Main,
+	)
 }
 
 func runCommand(
+	ctx context.Context,
 	arguments []string,
 	output io.Writer,
 	errorOutput io.Writer,
 	exit func(int),
 	runAnalyzers func(...*toolanalysis.Analyzer),
 ) {
-	handled, blocking, err := runCheck(context.Background(), arguments, output)
+	handled, blocking, err := runCheck(ctx, arguments, output)
 	if handled {
 		if err != nil {
 			exitWithCommandError(errorOutput, err, exit)
@@ -65,7 +73,7 @@ func runCommand(
 		}
 		return
 	}
-	handled, err = runUtility(arguments, output)
+	handled, err = runUtilityContext(ctx, arguments, output)
 	if handled {
 		if err != nil {
 			exitWithCommandError(errorOutput, err, exit)
@@ -160,10 +168,32 @@ func analyzers() []*toolanalysis.Analyzer {
 }
 
 func runUtility(arguments []string, output io.Writer) (bool, error) {
-	return runUtilityWithRegistry(arguments, output, policy.Builtin)
+	return runUtilityContext(context.Background(), arguments, output)
+}
+
+func runUtilityContext(
+	ctx context.Context,
+	arguments []string,
+	output io.Writer,
+) (bool, error) {
+	return runUtilityWithRegistryContext(ctx, arguments, output, policy.Builtin)
 }
 
 func runUtilityWithRegistry(
+	arguments []string,
+	output io.Writer,
+	registryFactory func() (*policy.Registry, error),
+) (bool, error) {
+	return runUtilityWithRegistryContext(
+		context.Background(),
+		arguments,
+		output,
+		registryFactory,
+	)
+}
+
+func runUtilityWithRegistryContext(
+	ctx context.Context,
 	arguments []string,
 	output io.Writer,
 	registryFactory func() (*policy.Registry, error),
@@ -200,7 +230,7 @@ func runUtilityWithRegistry(
 		if err != nil {
 			return true, fmt.Errorf("build rule inventory: %w", err)
 		}
-		config, err := shared.LoadConfig(arguments[1], registry.IDs())
+		config, err := shared.LoadConfigContext(ctx, arguments[1], registry.IDs())
 		if err != nil {
 			return true, err
 		}
@@ -212,23 +242,25 @@ func runUtilityWithRegistry(
 		}
 		return true, nil
 	case "sync-policy":
-		return runPolicySync(arguments, output, registryFactory)
+		return runPolicySync(ctx, arguments, output, registryFactory)
 	default:
 		return false, nil
 	}
 }
 
 func runPolicySync(
+	ctx context.Context,
 	arguments []string,
 	output io.Writer,
 	registryFactory func() (*policy.Registry, error),
 ) (bool, error) {
-	return runPolicySyncWithDependencies(
+	return runPolicySyncWithDependenciesContext(
+		ctx,
 		arguments,
 		output,
 		registryFactory,
 		policySyncDependencies{
-			loadConfig: shared.LoadConfig,
+			loadConfig: shared.LoadConfigContext,
 			validate:   driver.Validate,
 			readFile:   os.ReadFile,
 			writeFile:  os.WriteFile,
@@ -237,13 +269,29 @@ func runPolicySync(
 }
 
 type policySyncDependencies struct {
-	loadConfig func(string, []string) (*shared.Config, error)
+	loadConfig func(context.Context, string, []string) (*shared.Config, error)
 	validate   func(*shared.Config) error
 	readFile   func(string) ([]byte, error)
 	writeFile  func(string, []byte, os.FileMode) error
 }
 
 func runPolicySyncWithDependencies(
+	arguments []string,
+	output io.Writer,
+	registryFactory func() (*policy.Registry, error),
+	dependencies policySyncDependencies,
+) (bool, error) {
+	return runPolicySyncWithDependenciesContext(
+		context.Background(),
+		arguments,
+		output,
+		registryFactory,
+		dependencies,
+	)
+}
+
+func runPolicySyncWithDependenciesContext(
+	ctx context.Context,
 	arguments []string,
 	output io.Writer,
 	registryFactory func() (*policy.Registry, error),
@@ -259,7 +307,7 @@ func runPolicySyncWithDependencies(
 	if err != nil {
 		return true, fmt.Errorf("build rule inventory: %w", err)
 	}
-	config, err := dependencies.loadConfig(arguments[2], registry.IDs())
+	config, err := dependencies.loadConfig(ctx, arguments[2], registry.IDs())
 	if err != nil {
 		return true, fmt.Errorf("validate canonical policy: %w", err)
 	}

@@ -2,6 +2,7 @@ package analysis
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -15,7 +16,7 @@ func TestLoadConfigRejectsPathResolutionFailure(t *testing.T) {
 
 	_, err := loadConfig("analysis.yml", nil, func(string) (string, error) {
 		return "", errors.New("working directory unavailable")
-	})
+	}, readConfiguration)
 	if err == nil || !strings.Contains(err.Error(), "resolve configuration path") {
 		t.Fatalf("loadConfig() error = %v, want path resolution error", err)
 	}
@@ -40,6 +41,57 @@ func TestReadConfigurationAcceptsExactSizeLimit(t *testing.T) {
 		t.Fatalf("len(readConfiguration()) = %d, want %d",
 			len(got), maxConfigurationBytes)
 	}
+}
+
+func TestReadConfigurationRejectsCanceledContextBeforeOpen(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := readConfigurationContext(ctx, filepath.Join(t.TempDir(), "missing.yml"))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("readConfiguration() error = %v, want cancellation", err)
+	}
+}
+
+func TestReadConfigurationContentsStopsAfterCancellation(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	reader := &cancelingReader{cancel: cancel}
+	_, err := readConfigurationContents(readerWithContext(ctx, reader))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("readConfigurationContents() error = %v, want cancellation", err)
+	}
+	if reader.reads != 1 {
+		t.Fatalf("reader calls = %d, want 1", reader.reads)
+	}
+}
+
+func TestReadConfigurationContentsDoesNotReadCanceledContext(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	reader := &cancelingReader{cancel: cancel}
+	_, err := readConfigurationContents(readerWithContext(ctx, reader))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("readConfigurationContents() error = %v, want cancellation", err)
+	}
+	if reader.reads != 0 {
+		t.Fatalf("reader calls = %d, want 0", reader.reads)
+	}
+}
+
+type cancelingReader struct {
+	cancel context.CancelFunc
+	reads  int
+}
+
+func (reader *cancelingReader) Read(buffer []byte) (int, error) {
+	reader.reads++
+	reader.cancel()
+	return copy(buffer, "version: 1\n"), nil
 }
 
 func TestGeneratedPolicyEnforcesPathLimit(t *testing.T) {

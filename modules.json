@@ -310,6 +310,18 @@
         },
         {
           "module_directory": ".",
+          "directory": "examples/quickstart",
+          "name": "main",
+          "import_path": "github.com/faustbrian/go-analysis/examples/quickstart",
+          "kind": "example",
+          "production": false,
+          "executable": true,
+          "coverage_required": false,
+          "build_required": true,
+          "build_tags": []
+        },
+        {
+          "module_directory": ".",
           "directory": "internal/driver",
           "name": "driver",
           "import_path": "github.com/faustbrian/go-analysis/internal/driver",
@@ -460,7 +472,7 @@
           "security": "docs/security.md",
           "compatibility": "docs/compatibility.md",
           "performance": "docs/corpus.md",
-          "examples": "README.md",
+          "examples": "examples/quickstart/main.go",
           "faq": "docs/faq.md",
           "changelog": "CHANGELOG.md",
           "pkg_go_dev": "https://pkg.go.dev/github.com/faustbrian/go-analysis",

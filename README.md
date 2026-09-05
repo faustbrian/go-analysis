@@ -20,6 +20,13 @@ golangci-lint, gosec, govulncheck, CodeQL, race tests, fuzzing, or NilAway.
 The v1 API is stable. Every shipped rule is advisory by default until corpus
 evidence supports an explicit blocking promotion.
 
+Install the public packages and command from the canonical module path:
+
+```sh
+go get github.com/faustbrian/go-analysis@v1.0.0
+go install github.com/faustbrian/go-analysis/cmd/golib-analysis@v1.0.0
+```
+
 Use the [documentation index](docs/README.md) for configuration, rule design,
 rollout, security, compatibility, and maintenance guidance. The package-owned
 guides are [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md),
@@ -38,10 +45,23 @@ and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools
 
 ## Requirements
 
-- Go 1.26 or newer
+- Go 1.26.6 or newer
 - No target program execution and no configuration plugins
 
 ## Five-minute quickstart
+
+Run the executable Go example to load and validate a policy through the public
+context-aware API:
+
+```sh
+go run ./examples/quickstart ./examples/quickstart/analysis.yml
+```
+
+Use `analysis` for policy and report values, `policy` for the governed built-in
+registry, `analyzers/<rule>` when embedding individual analyzers,
+`cmd/golib-analysis` for repository checks, and `analysistestkit` for this
+repository's analyzer corpus. The complete selection map is maintained in
+[`modules.json`](modules.json).
 
 Build the pinned local binary:
 
@@ -127,6 +147,13 @@ ownership.
 
 Run `make check`. See [CONTRIBUTING.md](CONTRIBUTING.md) for focused and release
 verification.
+
+## Support and security
+
+Use [SUPPORT.md](SUPPORT.md) for support channels and reproducible issue
+requirements. Report vulnerabilities through the private process in
+[SECURITY.md](SECURITY.md). Compatibility and migration policy are documented
+in [COMPATIBILITY.md](COMPATIBILITY.md) and [DEPRECATION.md](DEPRECATION.md).
 
 ## Scope
 

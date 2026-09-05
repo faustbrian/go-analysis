@@ -148,7 +148,7 @@ func run(ctx context.Context, options Options, dependencies dependencies) (Resul
 	if err != nil {
 		return Result{}, fmt.Errorf("build rule registry: %w", err)
 	}
-	config, err := shared.LoadConfig(options.ConfigPath, registry.IDs())
+	config, err := shared.LoadConfigContext(ctx, options.ConfigPath, registry.IDs())
 	if err != nil {
 		return Result{}, err
 	}

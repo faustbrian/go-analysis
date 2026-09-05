@@ -316,6 +316,18 @@
     },
     {
       "module_directory": ".",
+      "directory": "examples/quickstart",
+      "name": "main",
+      "import_path": "github.com/faustbrian/go-analysis/examples/quickstart",
+      "kind": "example",
+      "production": false,
+      "executable": true,
+      "coverage_required": false,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
       "directory": "internal/driver",
       "name": "driver",
       "import_path": "github.com/faustbrian/go-analysis/internal/driver",

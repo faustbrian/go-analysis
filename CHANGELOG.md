@@ -6,6 +6,17 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+### Added
+
+- Add context-aware configuration loading and propagate caller cancellation
+  through configured command and driver paths.
+
+### Deprecated
+
+- Deprecate context-free `LoadConfig`; it retains its v1 behavior while callers
+  migrate to cancellable `LoadConfigContext` under the frozen support interval
+  in `DEPRECATION.md`.
+
 ### Changed
 
 - Adopt the checksum-verified `go-library-tools` v1.4.0 CLI, declare complete
@@ -18,6 +29,10 @@ semantic versioning; compatibility decisions are described in
   corpus fixtures, and mutation evidence.
 
 ### Documentation
+
+- Add an executable public-package quick start, package-selection guidance,
+  canonical installation commands, the exact minimum Go version, and explicit
+  support and security links.
 
 - Link the public module to the immutable v1.4.0 Golib ecosystem index and
   Tooling family guidance, and publish package-selection metadata.

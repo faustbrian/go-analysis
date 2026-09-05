@@ -143,6 +143,7 @@ func TestCommandEntrypointMapsOutcomesAndFallsBackToVettool(t *testing.T) {
 			exitCode := 0
 			fallbackCalls := 0
 			runCommand(
+				context.Background(),
 				test.arguments,
 				&output,
 				&errorOutput,
@@ -170,6 +171,7 @@ func TestCommandEntrypointMapsOutcomesAndFallsBackToVettool(t *testing.T) {
 		exitCalls := 0
 		fallbackCalls := 0
 		runCommand(
+			context.Background(),
 			[]string{"check"},
 			&bytes.Buffer{},
 			failingWriter{},
@@ -263,6 +265,22 @@ func TestRunUtilityValidatesConfiguration(t *testing.T) {
 	handled, err := runUtility([]string{"validate-config", path}, &output)
 	if err != nil || !handled || output.String() != "configuration valid\n" {
 		t.Fatalf("runUtility() = %t, %q, %v", handled, output.String(), err)
+	}
+}
+
+func TestRunUtilityPropagatesConfigurationCancellation(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	for _, arguments := range [][]string{
+		{"validate-config", "missing.yml"},
+		{"sync-policy", "check", "missing.yml", "local.yml"},
+	} {
+		handled, err := runUtilityContext(ctx, arguments, &bytes.Buffer{})
+		if !handled || !errors.Is(err, context.Canceled) {
+			t.Fatalf("runUtilityContext(%q) = %t, %v, want cancellation", arguments, handled, err)
+		}
 	}
 }
 
@@ -362,7 +380,7 @@ func TestRunPolicySyncPropagatesDependencies(t *testing.T) {
 	t.Parallel()
 
 	factory := func() (*policy.Registry, error) { return policy.Builtin() }
-	validConfig := func(string, []string) (*shared.Config, error) {
+	validConfig := func(context.Context, string, []string) (*shared.Config, error) {
 		return &shared.Config{Version: 1}, nil
 	}
 	tests := []struct {
@@ -374,7 +392,7 @@ func TestRunPolicySyncPropagatesDependencies(t *testing.T) {
 			name:      "load",
 			arguments: []string{"sync-policy", "check", "canonical", "local"},
 			dependencies: policySyncDependencies{
-				loadConfig: func(string, []string) (*shared.Config, error) {
+				loadConfig: func(context.Context, string, []string) (*shared.Config, error) {
 					return nil, errors.New("load failure")
 				},
 			},
