@@ -104,6 +104,17 @@ type Config struct {
 func LoadConfig(path string, knownRules []string) (*Config, error)
     LoadConfig reads exactly one strict YAML policy document.
 
+    Deprecated: use LoadConfigContext so cancellation can bound filesystem work.
+
+func LoadConfigContext(
+	ctx context.Context,
+	path string,
+	knownRules []string,
+) (*Config, error)
+    LoadConfigContext reads exactly one strict YAML policy document. It observes
+    cancellation before and between filesystem operations and does not retain
+    ctx.
+
 func (config Config) Validate(knownRules []string) error
     Validate checks a decoded configuration against the governed rule IDs.
 

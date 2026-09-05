@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "internal/driver",
+  "gate": "mutation",
+  "input_digest": "sha256:efb15be201298f1a9f92397c6cc65cb34994a5d322a4e2b5df2cdef255e927cc",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:a03c189c5329f1d8a78c13ce75bf2989e9d5380d7c131727aeddb42bfc8e3c49",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "gremlins_binary_sha256": "sha256:e05bf25d661b16ab96d6f2e17aed481d393930e0f24205cc341b010f887368a0"
+  },
+  "completed_at": "2026-09-05T12:26:23.636078Z"
+}

@@ -12,3 +12,23 @@ the exception.
 Silent behavior changes, undocumented aliases, and indefinite deprecated code
 are prohibited. Deprecations are checked during compatibility and release
 review.
+
+## Active deprecations
+
+### `analysis.LoadConfig`
+
+`LoadConfig` is deprecated because its signature cannot propagate caller
+cancellation or deadlines through configuration-file I/O. Replace calls with:
+
+```go
+config, err := analysis.LoadConfigContext(ctx, path, knownRules)
+```
+
+Callers must pass the context that owns the surrounding command or operation.
+`LoadConfig` retains its existing context-free behavior during migration.
+
+Support for `LoadConfig` is frozen for the longer of 180 days after the first
+stable release containing this deprecation and two subsequently published
+stable minor releases. Removal is permitted only in an explicitly authorized
+next major release after known consumers have migrated. No removal version is
+currently scheduled.

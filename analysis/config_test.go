@@ -2,13 +2,86 @@ package analysis_test
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	shared "github.com/faustbrian/go-analysis/analysis"
 )
+
+func TestLoadConfigContextRejectsDoneContextBeforeFilesystemAccess(t *testing.T) {
+	t.Parallel()
+
+	t.Run("canceled", func(t *testing.T) {
+		t.Parallel()
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		assertLoadConfigContextError(t, ctx, context.Canceled)
+	})
+	t.Run("deadline", func(t *testing.T) {
+		t.Parallel()
+		ctx, cancel := context.WithDeadline(context.Background(), time.Unix(0, 0))
+		defer cancel()
+		assertLoadConfigContextError(t, ctx, context.DeadlineExceeded)
+	})
+}
+
+func assertLoadConfigContextError(t *testing.T, ctx context.Context, want error) {
+	t.Helper()
+	_, err := shared.LoadConfigContext(
+		ctx,
+		filepath.Join(t.TempDir(), "missing.yml"),
+		nil,
+	)
+	if !errors.Is(err, want) {
+		t.Fatalf("LoadConfigContext() error = %v, want %v", err, want)
+	}
+}
+
+func TestLoadConfigContextLoadsPolicy(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+	path := writeConfig(t, directory, "version: 1\n")
+	config, err := shared.LoadConfigContext(context.Background(), path, nil)
+	if err != nil {
+		t.Fatalf("LoadConfigContext() error = %v", err)
+	}
+	if config.Version != 1 || config.Root != directory {
+		t.Fatalf("LoadConfigContext() = version %d, root %q", config.Version, config.Root)
+	}
+}
+
+func TestLoadConfigContextRejectsMissingFile(t *testing.T) {
+	t.Parallel()
+
+	_, err := shared.LoadConfigContext(
+		context.Background(),
+		filepath.Join(t.TempDir(), "missing.yml"),
+		nil,
+	)
+	if err == nil || !strings.Contains(err.Error(), "read configuration") {
+		t.Fatalf("LoadConfigContext() error = %v, want read error", err)
+	}
+}
+
+func TestLoadConfigContextRejectsOversizedPolicy(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "analysis.yml")
+	contents := bytes.Repeat([]byte{'#'}, (1<<20)+1)
+	if err := os.WriteFile(path, contents, 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	_, err := shared.LoadConfigContext(context.Background(), path, nil)
+	if err == nil || !strings.Contains(err.Error(), "configuration exceeds") {
+		t.Fatalf("LoadConfigContext() error = %v, want size rejection", err)
+	}
+}
 
 func TestLoadConfigUsesConfigDirectoryAsDeterministicRoot(t *testing.T) {
 	t.Parallel()

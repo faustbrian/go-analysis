@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/noprocesscontrol",
+  "gate": "mutation",
+  "input_digest": "sha256:62f0c34e88eafdab1974fdd04fd11be0085095fa0e3b4b24b6d6de5ed397f4b2",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:991b6f6f1de5a5d9161eb72927bb763f15a5fbac1010331879460932e2a1654e",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "gremlins_binary_sha256": "sha256:e05bf25d661b16ab96d6f2e17aed481d393930e0f24205cc341b010f887368a0"
+  },
+  "completed_at": "2026-09-05T12:22:28.419156Z"
+}

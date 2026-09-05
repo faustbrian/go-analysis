@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/cleanupownership",
+  "gate": "mutation",
+  "input_digest": "sha256:007f49ec20c1350ce93125dd9b4bfd6a9bf270c9baa3a4b9c9a2e0ae220e4680",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:e4a46423e01b1099e77b2a66670998b7dbb003900c3630a48f1c85b2ca5f8f5f",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "gremlins_binary_sha256": "sha256:e05bf25d661b16ab96d6f2e17aed481d393930e0f24205cc341b010f887368a0"
+  },
+  "completed_at": "2026-09-05T12:12:59.98415Z"
+}

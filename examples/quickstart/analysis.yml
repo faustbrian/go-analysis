@@ -1,0 +1,4 @@
+version: 1
+rules:
+  context/blocking-api-context:
+    status: advisory

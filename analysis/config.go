@@ -2,6 +2,7 @@ package analysis
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -214,20 +215,43 @@ type PolicyException struct {
 }
 
 // LoadConfig reads exactly one strict YAML policy document.
+//
+// Deprecated: use LoadConfigContext so cancellation can bound filesystem work.
 func LoadConfig(path string, knownRules []string) (*Config, error) {
-	return loadConfig(path, knownRules, filepath.Abs)
+	return loadConfig(path, knownRules, filepath.Abs, readConfiguration)
+}
+
+// LoadConfigContext reads exactly one strict YAML policy document. It observes
+// cancellation before and between filesystem operations and does not retain ctx.
+func LoadConfigContext(
+	ctx context.Context,
+	path string,
+	knownRules []string,
+) (*Config, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("load configuration: %w", err)
+	}
+	return loadConfig(
+		path,
+		knownRules,
+		filepath.Abs,
+		func(path string) ([]byte, error) {
+			return readConfigurationContext(ctx, path)
+		},
+	)
 }
 
 func loadConfig(
 	path string,
 	knownRules []string,
 	resolve func(string) (string, error),
+	read func(string) ([]byte, error),
 ) (*Config, error) {
 	absolute, err := resolve(path)
 	if err != nil {
 		return nil, fmt.Errorf("resolve configuration path: %w", err)
 	}
-	contents, err := readConfiguration(absolute)
+	contents, err := read(absolute)
 	if err != nil {
 		return nil, err
 	}
@@ -242,16 +266,56 @@ func readConfiguration(path string) ([]byte, error) {
 	}
 	defer func() { _ = file.Close() }()
 
-	contents, err := io.ReadAll(io.LimitReader(file, maxConfigurationBytes+1))
+	return readConfigurationContents(io.LimitReader(file, maxConfigurationBytes+1))
+}
+
+func readConfigurationContext(ctx context.Context, path string) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("read configuration: %w", err)
+	}
+	file, err := os.Open(path) // #nosec G304 -- explicit policy path
+	if err != nil {
+		return nil, fmt.Errorf("read configuration: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+
+	return readConfigurationContents(io.LimitReader(
+		readerWithContext(ctx, file),
+		maxConfigurationBytes+1,
+	))
+}
+
+func readerWithContext(ctx context.Context, reader io.Reader) io.Reader {
+	return contextReadFunc(func(buffer []byte) (int, error) {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		default:
+		}
+		count, err := reader.Read(buffer)
+		select {
+		case <-ctx.Done():
+			return count, ctx.Err()
+		default:
+			return count, err
+		}
+	})
+}
+
+func readConfigurationContents(reader io.Reader) ([]byte, error) {
+	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("read configuration: %w", err)
 	}
 	if len(contents) > maxConfigurationBytes {
 		return nil, fmt.Errorf("configuration exceeds %d bytes", maxConfigurationBytes)
 	}
-
 	return contents, nil
 }
+
+type contextReadFunc func([]byte) (int, error)
+
+func (read contextReadFunc) Read(buffer []byte) (int, error) { return read(buffer) }
 
 func decodeConfig(contents []byte, root string, knownRules []string) (*Config, error) {
 	decoder := yaml.NewDecoder(bytes.NewReader(contents))
