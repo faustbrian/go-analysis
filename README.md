@@ -23,8 +23,8 @@ evidence supports an explicit blocking promotion.
 Install the public packages and command from the canonical module path:
 
 ```sh
-go get github.com/faustbrian/go-analysis@v1.0.0
-go install github.com/faustbrian/go-analysis/cmd/golib-analysis@v1.0.0
+go get github.com/faustbrian/go-analysis@v1.1.0
+go install github.com/faustbrian/go-analysis/cmd/golib-analysis@v1.1.0
 ```
 
 Use the [documentation index](docs/README.md) for configuration, rule design,

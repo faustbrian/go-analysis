@@ -19,5 +19,5 @@ package-specific: build
 	./scripts/corpus.sh check corpus/manifest.tsv
 	./scripts/performance.sh corpus/performance.tsv
 	./scripts/reproducible-build.sh
-	./scripts/verify-release.sh 1.0.0
+	./scripts/verify-release.sh 1.1.0
 	go vet -vettool=.build/golib-analysis ./analysis ./policy ./internal/driver
