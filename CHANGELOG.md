@@ -6,6 +6,8 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+## 1.1.0 - 2026-09-09
+
 ### Added
 
 - Add context-aware configuration loading and propagate caller cancellation
