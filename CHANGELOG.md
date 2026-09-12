@@ -6,6 +6,10 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+### Changed
+
+- Register the released public API baseline with the shared compatibility gate.
+
 ## 1.1.0 - 2026-09-09
 
 ### Added
