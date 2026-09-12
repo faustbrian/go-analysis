@@ -40,6 +40,10 @@ operations:
   - module: "."
     gate: conformance
     steps:
+      - type: make
+        makefile: verification/package.mk
+        target: compatibility
+        timeout: 20m
       - type: go-test
         packages:
           - ./analysis

@@ -9,6 +9,8 @@ semantic versioning; compatibility decisions are described in
 ### Changed
 
 - Register the released public API baseline with the shared compatibility gate.
+- Retain the analyzer rule-inventory compatibility check in the conformance
+  gate alongside the maintained API baseline.
 
 ## 1.1.0 - 2026-09-09
 
