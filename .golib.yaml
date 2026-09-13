@@ -9,6 +9,12 @@ manifest:
 evidence:
   root: ".verification"
 
+api:
+  baselines:
+    - module: "."
+      mode: apidiff
+      path: api/baseline.txt
+
 mutation:
   root: ".verification/mutation"
   imports:
@@ -17,13 +23,6 @@ mutation:
       ledger: ".verification/mutation/migration-ledger.json"
 
 operations:
-  - module: "."
-    gate: api
-    steps:
-      - type: make
-        makefile: verification/package.mk
-        target: compatibility
-        timeout: 20m
   - module: "."
     gate: test
     steps:
@@ -41,6 +40,10 @@ operations:
   - module: "."
     gate: conformance
     steps:
+      - type: make
+        makefile: verification/package.mk
+        target: compatibility
+        timeout: 20m
       - type: go-test
         packages:
           - ./analysis
