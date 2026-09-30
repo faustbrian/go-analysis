@@ -64,6 +64,14 @@ func TestParseConfigBytesValidatesExactSnapshot(t *testing.T) {
 	if err != nil || config.Version != 1 || config.Root != filepath.Dir(path) {
 		t.Fatalf("ParseConfigBytes(valid) = %#v, %v", config, err)
 	}
+	exactLimit := append(
+		[]byte("version: 1\n#"),
+		bytes.Repeat([]byte{'x'}, (1<<20)-len("version: 1\n#"))...,
+	)
+	config, err = shared.ParseConfigBytes(path, exactLimit, nil)
+	if err != nil || config.Version != 1 || config.Root != filepath.Dir(path) {
+		t.Fatalf("ParseConfigBytes(exact 1 MiB) = %#v, %v", config, err)
+	}
 	for _, contents := range [][]byte{
 		[]byte("version: 2\n"),
 		[]byte("version: 1\nunknown: true\n"),
