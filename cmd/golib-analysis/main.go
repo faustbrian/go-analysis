@@ -282,7 +282,11 @@ func readPolicySyncFile(ctx context.Context, path string) ([]byte, error) {
 		return nil, err
 	}
 	defer func() { _ = file.Close() }()
-	contents, err := io.ReadAll(io.LimitReader(file, maxPolicySyncBytes+1))
+	return readPolicySyncContents(ctx, file)
+}
+
+func readPolicySyncContents(ctx context.Context, reader io.Reader) ([]byte, error) {
+	contents, err := io.ReadAll(io.LimitReader(reader, maxPolicySyncBytes+1))
 	if err != nil {
 		return nil, err
 	}

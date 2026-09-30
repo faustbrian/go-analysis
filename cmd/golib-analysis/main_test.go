@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	shared "github.com/faustbrian/go-analysis/analysis"
 	"github.com/faustbrian/go-analysis/policy"
@@ -440,6 +442,118 @@ func TestPolicySyncRejectsOversizedLocalSnapshot(t *testing.T) {
 		t.Fatalf("sync-policy check oversized local = %t, %v", handled, err)
 	}
 }
+
+func TestReadPolicySyncFileRejectsCanceledMissingAndOversizedInput(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+	missing := filepath.Join(directory, "missing.yml")
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := readPolicySyncFile(ctx, missing); !errors.Is(err, context.Canceled) {
+		t.Fatalf("readPolicySyncFile(canceled) = %v, want cancellation before open", err)
+	}
+	if _, err := readPolicySyncFile(context.Background(), missing); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("readPolicySyncFile(missing) = %v, want missing-file error", err)
+	}
+	oversized := filepath.Join(directory, "oversized.yml")
+	if err := os.WriteFile(oversized, bytes.Repeat([]byte{'x'}, maxPolicySyncBytes+1), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readPolicySyncFile(context.Background(), oversized); err == nil ||
+		!strings.Contains(err.Error(), "policy snapshot exceeds") {
+		t.Fatalf("readPolicySyncFile(oversized) = %v, want bounded rejection", err)
+	}
+}
+
+func TestReadPolicySyncContentsPropagatesReadErrorAndCancellation(t *testing.T) {
+	t.Parallel()
+
+	want := errors.New("read failed")
+	if _, err := readPolicySyncContents(context.Background(), iotest.ErrReader(want)); !errors.Is(err, want) {
+		t.Fatalf("readPolicySyncContents(error reader) = %v, want read error", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	reader := policyReadFunc(func(buffer []byte) (int, error) {
+		cancel()
+		return copy(buffer, "version: 1\n"), io.EOF
+	})
+	if _, err := readPolicySyncContents(ctx, reader); !errors.Is(err, context.Canceled) {
+		t.Fatalf("readPolicySyncContents(canceled after read) = %v, want cancellation", err)
+	}
+}
+
+func TestPolicySyncRejectsUnvalidatedOrOversizedSnapshots(t *testing.T) {
+	t.Parallel()
+
+	tooLarge := bytes.Repeat([]byte{'x'}, maxPolicySyncBytes+1)
+	wantValidation := errors.New("snapshot rejected")
+	tests := []struct {
+		name           string
+		mode           string
+		canonical      []byte
+		local          []byte
+		validateOnRead bool
+		cancelOnRead   bool
+		wantError      string
+		wantWrapped    error
+	}{
+		{"oversized canonical", "update", tooLarge, nil, false, false, "canonical policy exceeds", nil},
+		{"invalid snapshot semantics", "update", []byte("version: 1\n"), nil, true, false, "validate canonical policy snapshot", wantValidation},
+		{"canceled before write", "update", []byte("version: 1\n"), nil, false, true, "context canceled", context.Canceled},
+		{"oversized local", "check", []byte("version: 1\n"), tooLarge, false, false, "local policy exceeds", nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			validations := 0
+			writes := 0
+			dependencies := policySyncDependencies{
+				loadConfig: func(context.Context, string, []string) (*shared.Config, error) {
+					return &shared.Config{Version: 1}, nil
+				},
+				validate: func(*shared.Config) error {
+					validations++
+					if validations == 2 {
+						if test.validateOnRead {
+							return wantValidation
+						}
+						if test.cancelOnRead {
+							cancel()
+						}
+					}
+					return nil
+				},
+				readFile: func(path string) ([]byte, error) {
+					if path == "canonical" {
+						return test.canonical, nil
+					}
+					return test.local, nil
+				},
+				writeFile: func(string, []byte, os.FileMode) error {
+					writes++
+					return nil
+				},
+			}
+			handled, err := runPolicySyncWithDependenciesContext(ctx,
+				[]string{"sync-policy", test.mode, "canonical", "local"},
+				&bytes.Buffer{}, policy.Builtin, dependencies)
+			if !handled || err == nil || !strings.Contains(err.Error(), test.wantError) ||
+				(test.wantWrapped != nil && !errors.Is(err, test.wantWrapped)) {
+				t.Fatalf("sync-policy %s = %t, %v, want %q", test.mode, handled, err, test.wantError)
+			}
+			if writes != 0 {
+				t.Fatalf("sync-policy wrote local policy after rejection")
+			}
+		})
+	}
+}
+
+type policyReadFunc func([]byte) (int, error)
+
+func (read policyReadFunc) Read(buffer []byte) (int, error) { return read(buffer) }
 
 func TestRunPolicySyncPropagatesDependencies(t *testing.T) {
 	t.Parallel()
