@@ -1,5 +1,11 @@
 # Security and threat model
 
+Model version 1 (2026-09-30) describes the analyzer behavior in the signed
+`v1.2.0` source at `3bfc234fb561ae1f1c9d45a72a9fe1f2c1849930` and on
+`main` until a behavior change supersedes it. This post-release risk
+disposition is maintained documentation; it does not alter the immutable tag
+or establish that later source revisions have been reviewed.
+
 ## Trust boundaries
 
 The analyzer binary, pinned Go toolchain, checked-in policy, and release
@@ -28,6 +34,23 @@ lifecycle is outside the reproducible compatibility contract.
 | Resource exhaustion | Configuration input, diagnostics, suppressions, SSA traces, static fan-out proofs, corpus entries, and benchmark budgets are bounded | Extremely large valid packages still consume parser and type-checker resources; CI timeouts and representative corpus budgets remain required |
 | Dependency or release compromise | Dependencies and tools are pinned, actions use commit SHAs, local archive scripts check reproducibility and checksums, and the current CI is read-only for repository contents | Current releases may be source-only; consumers must verify the trusted tag and public module checksum, plus archive checksums if archives are published, and retain independent dependency, vulnerability, and CodeQL gates |
 | Advisory escalation | Rule metadata defaults to advisory; configured reporting separates severity from blocking status; NilAway runs separately with visible advisory status | Raw multichecker and vettool execution use Go vet exit semantics, so use configured `check` when advisory status must be preserved |
+
+## Accepted residual risks
+
+The controls above reduce but do not eliminate these risks. Each owner is
+responsible for the stated mitigation in its own environment and for reopening
+the disposition when the review condition occurs.
+
+| Residual risk | Owner | Acceptance rationale and mitigation | Review condition |
+| --- | --- | --- | --- |
+| Package loading and module downloads | Invoking operator or CI owner | Go package metadata is needed for analysis; use least-privilege credentials and an explicit module-download/network policy | Package-loading behavior or download policy changes, or unexpected process/network activity |
+| Valid policy weakening | Policy owner and reviewers | Configurability is intentional; review rule, exception, and compatibility changes as security-relevant policy | New policy syntax, rule promotion or exception, or unexpected blocking-status drift |
+| Operator-selected paths, permissions, and path metadata | Invoking operator or CI owner | `sync-policy` acts on explicitly selected local files, not in a sandbox; select trusted paths, use least privilege, and restrict metadata exposure | Higher-privilege use, a new sandbox expectation, changed path handling, or metadata disclosure |
+| Report secrecy and downstream rendering | Report storage and renderer owners | Useful diagnostics necessarily expose repository metadata; restrict access and retention, and keep renderers patched | New report fields, renderer/export path, public upload, or disclosure finding |
+| Authorized generators and suppression reasons | Generator and repository policy owners | Authorized output paths and justified exceptions support repository workflows; review generator output and suppression inventories | Generator or exclusion changes, expired or abused suppression, or an unjustified reason |
+| Large valid packages | Invoking CI owner and analyzer maintainers | Analyzer-owned inputs are bounded, but Go parsing and type checking can still exhaust resources; retain CI timeouts and representative corpus budgets | Sustained memory/time budget breach, loader change, or adversarial valid corpus |
+| Dependencies and release integrity | Repository and release maintainers | External tools and publication remain trust dependencies; review pins, retain security gates, and verify trusted tag and public module checksum | Dependency, action, toolchain, or release process change; checksum/signature mismatch or compromise |
+| Advisory exit semantics | Integrating caller or CI owner | Raw vettool execution intentionally follows Go vet exits; use configured `check` when advisory status is required | Switching invocation mode or changing rule severity/blocking policy |
 
 ## Report handling
 
