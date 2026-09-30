@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	shared "github.com/faustbrian/go-analysis/analysis"
@@ -373,6 +374,70 @@ func TestRunUtilityRejectsInvalidPolicySync(t *testing.T) {
 	got, err := os.ReadFile(local) // #nosec G304 -- test-owned temporary path
 	if err != nil || string(got) != "preserve me\n" {
 		t.Fatalf("local policy = %q, %v", got, err)
+	}
+}
+
+func TestPolicySyncRejectsCanonicalChangedAfterValidation(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+	canonical := filepath.Join(directory, "canonical.yml")
+	local := filepath.Join(directory, "analysis.yml")
+	if err := os.WriteFile(canonical, []byte("version: 1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(local, []byte("preserve me\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	dependencies := policySyncDependencies{
+		loadConfig: func(ctx context.Context, path string, knownRules []string) (*shared.Config, error) {
+			config, err := shared.LoadConfigContext(ctx, path, knownRules)
+			if err != nil {
+				return nil, err
+			}
+			if err := os.WriteFile(path, []byte("version: 2\n"), 0o600); err != nil {
+				return nil, err
+			}
+			return config, nil
+		},
+		validate:  func(*shared.Config) error { return nil },
+		readFile:  os.ReadFile,
+		writeFile: os.WriteFile,
+	}
+	handled, err := runPolicySyncWithDependenciesContext(
+		context.Background(),
+		[]string{"sync-policy", "update", canonical, local},
+		&bytes.Buffer{},
+		policy.Builtin,
+		dependencies,
+	)
+	if !handled || err == nil {
+		t.Fatalf("sync-policy update after canonical change = %t, %v", handled, err)
+	}
+	contents, err := os.ReadFile(local) // #nosec G304 -- test-owned temporary path
+	if err != nil || string(contents) != "preserve me\n" {
+		t.Fatalf("local policy after rejection = %q, %v", contents, err)
+	}
+}
+
+func TestPolicySyncRejectsOversizedLocalSnapshot(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+	canonical := filepath.Join(directory, "canonical.yml")
+	local := filepath.Join(directory, "analysis.yml")
+	if err := os.WriteFile(canonical, []byte("version: 1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(local, []byte(strings.Repeat("x", 1<<20+1)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	handled, err := runUtility(
+		[]string{"sync-policy", "check", canonical, local},
+		&bytes.Buffer{},
+	)
+	if !handled || err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("sync-policy check oversized local = %t, %v", handled, err)
 	}
 }
 

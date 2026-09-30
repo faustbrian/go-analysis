@@ -26,7 +26,7 @@ lifecycle is outside the reproducible compatibility contract.
 | Forged generated code | Exclusion requires explicit policy, an exact trusted repository-relative path, and a recognized generated header before the package clause; unlisted forged headers and their suppressions remain analyzed | A reviewed generator can still emit unsafe code at an authorized output path; generated output remains subject to generator and supply-chain review |
 | Suppression bypass | Directives require an exact known rule, adjacent diagnostic, non-empty reason, unique location, valid optional expiry, and matching finding | A semantically poor but syntactically valid reason requires human review; inventories support audit and trend checks |
 | Resource exhaustion | Configuration input, diagnostics, suppressions, SSA traces, static fan-out proofs, corpus entries, and benchmark budgets are bounded | Extremely large valid packages still consume parser and type-checker resources; CI timeouts and representative corpus budgets remain required |
-| Dependency or release compromise | Dependencies and tools are pinned, actions use commit SHAs, releases are reproducible and checksummed, and publication has scoped permissions | Consumers must verify checksums and signatures when available and retain independent dependency, vulnerability, and CodeQL gates |
+| Dependency or release compromise | Dependencies and tools are pinned, actions use commit SHAs, local archive scripts check reproducibility and checksums, and the current CI is read-only for repository contents | Current releases may be source-only; consumers must verify the trusted tag and public module checksum, plus archive checksums if archives are published, and retain independent dependency, vulnerability, and CodeQL gates |
 | Advisory escalation | Rule metadata defaults to advisory; configured reporting separates severity from blocking status; NilAway runs separately with visible advisory status | Raw multichecker and vettool execution use Go vet exit semantics, so use configured `check` when advisory status must be preserved |
 
 ## Report handling
@@ -39,12 +39,13 @@ because they are machine-readable.
 
 ## Supply-chain verification
 
-Release verification builds every archive twice, compares bytes, and emits a
-SHA-256 checksum manifest. Publishing verifies the pushed tag and grants write
-permission only to the release job. Consumers should pin an exact version and
-checksum, use the same artifact locally and in CI, keep gosec, govulncheck and
-CodeQL independently enabled, and sign or verify provenance when the release
-environment provides a trusted identity.
+The local release-verification script builds every candidate archive twice,
+compares bytes, and emits a SHA-256 checksum manifest. The current CI workflow
+does not publish archives or produce release provenance. Consumers should pin
+an exact module version and verify its public checksum and trusted tag; for a
+release with attached archives, also verify the archive checksum. Keep gosec,
+govulncheck, and CodeQL independently enabled. Claim signed provenance only
+when an actual trusted release environment produces it.
 
 The blocking CI workflow runs the pinned CodeQL Go query suite with a reviewed
 manual `go build -trimpath ./...` step. Go does not support CodeQL's `none`
@@ -57,9 +58,9 @@ golangci-lint binary and the separately pinned govulncheck command without
 hiding either authority behind this project's diagnostics.
 
 `make workflows` tests and enforces the workflow trust boundary locally.
-Every external action must use a full commit SHA, every workflow must default
-to read-only contents, and the only write scopes are CodeQL security results
-and tagged-release publication in their dedicated jobs.
+Every external action must use a full commit SHA. The current CI workflow has
+read-only contents permission; CodeQL has code-scanning write access. There is
+no tagged-release publication job in this repository.
 
 Security defects include target execution, path escape, source disclosure,
 suppression bypass, unbounded attacker-controlled analysis, report injection,

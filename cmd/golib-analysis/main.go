@@ -41,7 +41,10 @@ import (
 	"golang.org/x/tools/go/analysis/multichecker"
 )
 
-const commandPackage = "github.com/faustbrian/go-analysis/cmd/golib-analysis"
+const (
+	commandPackage     = "github.com/faustbrian/go-analysis/cmd/golib-analysis"
+	maxPolicySyncBytes = 1 << 20
+)
 
 func main() {
 	runCommand(
@@ -262,10 +265,34 @@ func runPolicySync(
 		policySyncDependencies{
 			loadConfig: shared.LoadConfigContext,
 			validate:   driver.Validate,
-			readFile:   os.ReadFile,
-			writeFile:  os.WriteFile,
+			readFile: func(path string) ([]byte, error) {
+				return readPolicySyncFile(ctx, path)
+			},
+			writeFile: os.WriteFile,
 		},
 	)
+}
+
+func readPolicySyncFile(ctx context.Context, path string) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	file, err := os.Open(path) // #nosec G304 -- explicit policy-sync path
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = file.Close() }()
+	contents, err := io.ReadAll(io.LimitReader(file, maxPolicySyncBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if len(contents) > maxPolicySyncBytes {
+		return nil, fmt.Errorf("policy snapshot exceeds %d bytes", maxPolicySyncBytes)
+	}
+	return contents, nil
 }
 
 type policySyncDependencies struct {
@@ -318,7 +345,20 @@ func runPolicySyncWithDependenciesContext(
 	if err != nil {
 		return true, fmt.Errorf("read canonical policy: %w", err)
 	}
+	if len(canonical) > maxPolicySyncBytes {
+		return true, fmt.Errorf("canonical policy exceeds %d bytes", maxPolicySyncBytes)
+	}
+	snapshot, err := shared.ParseConfigBytes(arguments[2], canonical, registry.IDs())
+	if err != nil {
+		return true, fmt.Errorf("validate canonical policy snapshot: %w", err)
+	}
+	if err := dependencies.validate(snapshot); err != nil {
+		return true, fmt.Errorf("validate canonical policy snapshot: %w", err)
+	}
 	if arguments[1] == "update" {
+		if err := ctx.Err(); err != nil {
+			return true, err
+		}
 		if err := dependencies.writeFile(arguments[3], canonical, 0o644); err != nil {
 			return true, fmt.Errorf("write local policy: %w", err)
 		}
@@ -330,6 +370,9 @@ func runPolicySyncWithDependenciesContext(
 	local, err := dependencies.readFile(arguments[3])
 	if err != nil {
 		return true, fmt.Errorf("read local policy: %w", err)
+	}
+	if len(local) > maxPolicySyncBytes {
+		return true, fmt.Errorf("local policy exceeds %d bytes", maxPolicySyncBytes)
 	}
 	if !bytes.Equal(canonical, local) {
 		return true, errors.New(
