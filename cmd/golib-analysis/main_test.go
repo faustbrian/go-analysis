@@ -397,7 +397,7 @@ func TestPolicySyncRejectsCanonicalChangedAfterValidation(t *testing.T) {
 			if err != nil {
 				return nil, err
 			}
-			if err := os.WriteFile(path, []byte("version: 2\n"), 0o600); err != nil {
+			if err := os.WriteFile(canonical, []byte("version: 2\n"), 0o600); err != nil {
 				return nil, err
 			}
 			return config, nil

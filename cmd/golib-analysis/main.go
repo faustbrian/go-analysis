@@ -277,7 +277,7 @@ func readPolicySyncFile(ctx context.Context, path string) ([]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	file, err := os.Open(path) // #nosec G304 -- explicit policy-sync path
+	file, err := os.Open(path) // #nosec G304 G703 -- operator-selected policy file; this command is not a path sandbox
 	if err != nil {
 		return nil, err
 	}
