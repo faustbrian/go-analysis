@@ -11,6 +11,13 @@ requires a digest review every 30 days. A changed source requires review of
 every affected decision, public contract, test, compatibility statement, and
 changelog entry before behavior changes.
 
+The 2026-09-30 authority review confirmed that the live OASIS SARIF 2.1.0
+index lists Errata 01 as the latest erratum. The official standard, Errata 01
+complete PDF, official schema, and three pinned maintained-peer source files
+still match their recorded SHA-256 digests. The unchanged bytes preserve the
+existing SARIF decision classifications; the policy-sync change does not
+alter SARIF output or its conformance boundary.
+
 ## Decision conformance
 
 | Decision | Authority | Executable evidence | Differential result |

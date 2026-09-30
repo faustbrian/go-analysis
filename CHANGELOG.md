@@ -6,8 +6,30 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+## 1.2.0 - 2026-09-30
+
+### Added
+
+- Add `ParseConfigBytes` to validate an in-memory policy snapshot against the
+  same strict public configuration contract as file loading.
+
+### Fixed
+
+- Validate the exact bounded canonical policy snapshot copied by `sync-policy`
+  and reject oversized local policy comparisons.
+
+### Documentation
+
+- Correct release guidance to distinguish local archive verification from the
+  current source-only publication workflow.
+
+## 1.1.1 - 2026-09-13
+
 ### Changed
 
+- Raise the minimum Go toolchain from 1.26.6 to 1.27.0.
+- Refresh `go.yaml.in/yaml/v3` to v3.0.5, `golang.org/x/tools` to v0.49.0,
+  and indirect `golang.org/x/mod` to v0.39.0.
 - Register the released public API baseline with the shared compatibility gate.
 - Retain the analyzer rule-inventory compatibility check in the conformance
   gate alongside the maintained API baseline.

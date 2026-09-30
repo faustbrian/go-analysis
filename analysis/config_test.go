@@ -56,6 +56,33 @@ func TestLoadConfigContextLoadsPolicy(t *testing.T) {
 	}
 }
 
+func TestParseConfigBytesValidatesExactSnapshot(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "analysis.yml")
+	config, err := shared.ParseConfigBytes(path, []byte("version: 1\n"), nil)
+	if err != nil || config.Version != 1 || config.Root != filepath.Dir(path) {
+		t.Fatalf("ParseConfigBytes(valid) = %#v, %v", config, err)
+	}
+	exactLimit := append(
+		[]byte("version: 1\n#"),
+		bytes.Repeat([]byte{'x'}, (1<<20)-len("version: 1\n#"))...,
+	)
+	config, err = shared.ParseConfigBytes(path, exactLimit, nil)
+	if err != nil || config.Version != 1 || config.Root != filepath.Dir(path) {
+		t.Fatalf("ParseConfigBytes(exact 1 MiB) = %#v, %v", config, err)
+	}
+	for _, contents := range [][]byte{
+		[]byte("version: 2\n"),
+		[]byte("version: 1\nunknown: true\n"),
+		bytes.Repeat([]byte{'#'}, (1<<20)+1),
+	} {
+		if _, err := shared.ParseConfigBytes(path, contents, nil); err == nil {
+			t.Fatalf("ParseConfigBytes(%d bytes) unexpectedly accepted", len(contents))
+		}
+	}
+}
+
 func TestLoadConfigContextRejectsMissingFile(t *testing.T) {
 	t.Parallel()
 

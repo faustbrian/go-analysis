@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/goroutinefanout",
+  "gate": "mutation",
+  "input_digest": "sha256:9e0c5f6aea40b5942143f4d68cddd36a47c5dddb1f29b27bc646a49d3cbd6829",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:e981b8f5565630d831828e2bc8c87fb8eea4de644ea35cf5463eb1b525bde4a7",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "amd64",
+    "GOOS": "linux",
+    "GOVERSION": "go1.27.0",
+    "gremlins_binary_sha256": "sha256:c445d9c04ffe4d2070617fd4df511cb19e48135950462912be29133b1b0169cc"
+  },
+  "completed_at": "2026-09-30T11:34:59.19587244Z"
+}

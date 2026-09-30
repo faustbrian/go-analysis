@@ -15,8 +15,9 @@ make ci
 golib release check
 ```
 
-`release-verify` packages the candidate twice and compares every byte. It
-checks six CGO-disabled targets: Linux, macOS, and Windows on amd64 and arm64.
+`./scripts/verify-release.sh <version>` packages the candidate twice and
+compares every byte. It checks six CGO-disabled targets: Linux, macOS, and
+Windows on amd64 and arm64.
 Every ZIP contains only the versioned directory, executable, README, changelog,
 and security policy. It validates sorted SHA-256 checksums, exact archive
 contents, and the host executable's reported version.
@@ -34,27 +35,23 @@ before checksums are created.
 
 ## Tag publication
 
-After local verification and review, a maintainer may create a signed
-`vX.Y.Z` tag pointing at the exact candidate commit. The tag-triggered release
-workflow repeats the shared release checks and package-specific verification before its
-publish job receives `contents: write`. All earlier steps retain read-only
-contents permission. The publish job builds the same archives and creates the
-GitHub release with `checksums.txt`.
+After local verification, independent review, and green exact-source CI, a
+maintainer may create a signed `vX.Y.Z` tag pointing at the reviewed main
+commit and publish a GitHub release. The current repository workflow runs on
+pull requests, main pushes, schedules, and manual dispatch; it does not run on
+tags or publish archives. A release is source-only unless a separate, reviewed
+publication process builds and uploads the verified archives and their
+`checksums.txt`. Do not describe locally built archives as CI-attested assets.
 
-The workflow never force-updates tags and does not publish from branches or
-arbitrary workflow input. Signing is owned by the maintainer and publishing
-environment; the repository does not manufacture signing identity. Consumers
-verify both the trusted tag or signature and the archive checksum.
-
-Branch CI runs the complete candidate gate on Linux and macOS. A blocking
-Windows leg independently runs vet, all analyzer tests, the race detector, and
-a trimpath command build so path and platform behavior is exercised before a
-candidate can be tagged.
+Signing is owned by the maintainer and publishing environment; the repository
+does not manufacture signing identity. Consumers should verify the trusted tag
+signature and public Go module checksum. If archives are actually published,
+consumers should also verify the corresponding archive checksum.
 
 ## Rollback and replacement
 
-Published artifacts are immutable. If a candidate is wrong, publish a new
-patch version with a changelog entry. Do not replace archives or checksums under
-an existing version. A withdrawn release may be marked clearly, but its tag and
-artifacts remain available for audit unless security response requires a
-documented exception.
+Published tags and any attached artifacts are immutable. If a candidate is
+wrong, publish a new patch version with a changelog entry. Do not replace
+archives or checksums under an existing version. A withdrawn release may be
+marked clearly, but its tag and any artifacts remain available for audit
+unless security response requires a documented exception.

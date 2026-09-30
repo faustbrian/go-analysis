@@ -24,8 +24,10 @@ policy validation without loading target packages. Success prints
 
 `golib-analysis sync-policy check <canonical> <local>` validates the canonical
 policy and requires the local policy to be byte-identical. Drift and missing
-files fail the command. `sync-policy update` validates the same canonical file
-before copying its exact bytes to the local path. Neither mode uses the network,
+files fail the command. Both files are limited to 1 MiB. `sync-policy update`
+validates the exact bounded canonical snapshot it copies to the local path;
+later changes to the canonical path cannot substitute unvalidated bytes.
+Neither mode uses the network,
 loads plugins, or executes configuration. The repository Makefile delegates
 verification to the shared tooling contract; policy synchronization remains an
 explicit `golib-analysis` command.
@@ -83,9 +85,10 @@ cloud credentials.
 decodes a versioned file against known rule IDs while observing caller
 cancellation before and between filesystem operations. The deprecated
 `LoadConfig` entry point remains as a context-free v1 compatibility wrapper.
-`ParseSuppressions`,
-`ApplySuppressions`, and `ApplyPolicyExceptions` implement the auditable
-exception pipeline. `WriteJSON` and `WriteSARIF` normalize and serialize a
+`ParseConfigBytes` strictly validates an in-memory policy snapshot using the
+given path to determine its repository-relative root without reading that path.
+`ParseSuppressions`, `ApplySuppressions`, and `ApplyPolicyExceptions` implement
+the auditable exception pipeline. `WriteJSON` and `WriteSARIF` normalize and serialize a
 `Report`. `Rule`, `Diagnostic`, `Suppression`, configuration policy types, and
 their enums are stable data contracts.
 
