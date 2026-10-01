@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-analysis",
+  "module": ".",
+  "package": "analyzers/cleanupownership",
+  "gate": "mutation",
+  "input_digest": "sha256:54408fe89144d9ca12ca5363b5f56f7923e58aa981b28cd0edbc5fef322a5212",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:e4a46423e01b1099e77b2a66670998b7dbb003900c3630a48f1c85b2ca5f8f5f",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "amd64",
+    "GOOS": "linux",
+    "GOVERSION": "go1.27.0",
+    "gremlins_binary_sha256": "sha256:c445d9c04ffe4d2070617fd4df511cb19e48135950462912be29133b1b0169cc"
+  },
+  "completed_at": "2026-09-30T11:31:28.472146781Z"
+}
