@@ -6,6 +6,14 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+### Changed
+
+- Refresh `golang.org/x/tools` to v0.50.0 and its dependencies:
+  `golang.org/x/mod` v0.41.0 and `golang.org/x/sync` v0.23.0. This
+  includes upstream SSA and Go vettool dependency-export updates.
+- Include upstream checksum-database security fixes from
+  `golang.org/x/mod`; these paths are not used by the analyzer runtime.
+
 ## 1.2.0 - 2026-09-30
 
 ### Added
