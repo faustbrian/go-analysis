@@ -99,8 +99,9 @@ make drift a local and CI failure:
 ```
 
 `LOCAL_POLICY` defaults to `analysis.yml`. Both commands are offline. The
-canonical file is validated before an update, and `check` requires exact byte
-identity so formatting or comment drift is also reviewable.
+canonical bytes copied by an update are strictly validated and limited to 1 MiB.
+`check` requires exact byte identity and bounds both files to 1 MiB, so formatting
+or comment drift is also reviewable.
 
 `check` exits 0 when no blocking finding remains, 1 for blocking findings, and
 2 for invalid arguments, invalid policy, loading failures, or analyzer errors.

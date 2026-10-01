@@ -256,6 +256,28 @@ func loadConfig(
 		return nil, err
 	}
 
+	return ParseConfigBytes(absolute, contents, knownRules)
+}
+
+// ParseConfigBytes validates one bounded strict YAML policy snapshot. The path
+// determines the root for repository-relative configuration and is not read.
+func ParseConfigBytes(path string, contents []byte, knownRules []string) (*Config, error) {
+	return parseConfigBytes(path, contents, knownRules, filepath.Abs)
+}
+
+func parseConfigBytes(
+	path string,
+	contents []byte,
+	knownRules []string,
+	resolve func(string) (string, error),
+) (*Config, error) {
+	if len(contents) > maxConfigurationBytes {
+		return nil, fmt.Errorf("configuration exceeds %d bytes", maxConfigurationBytes)
+	}
+	absolute, err := resolve(path)
+	if err != nil {
+		return nil, fmt.Errorf("resolve configuration path: %w", err)
+	}
 	return decodeConfig(contents, filepath.Dir(absolute), knownRules)
 }
 

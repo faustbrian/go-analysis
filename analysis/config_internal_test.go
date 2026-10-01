@@ -22,6 +22,17 @@ func TestLoadConfigRejectsPathResolutionFailure(t *testing.T) {
 	}
 }
 
+func TestParseConfigBytesRejectsPathResolutionFailure(t *testing.T) {
+	t.Parallel()
+
+	want := errors.New("working directory unavailable")
+	_, err := parseConfigBytes("analysis.yml", []byte("version: 1\n"), nil,
+		func(string) (string, error) { return "", want })
+	if !errors.Is(err, want) || !strings.Contains(err.Error(), "resolve configuration path") {
+		t.Fatalf("parseConfigBytes() error = %v, want wrapped path error", err)
+	}
+}
+
 func TestReadConfigurationAcceptsExactSizeLimit(t *testing.T) {
 	t.Parallel()
 

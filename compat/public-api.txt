@@ -115,6 +115,10 @@ func LoadConfigContext(
     cancellation before and between filesystem operations and does not retain
     ctx.
 
+func ParseConfigBytes(path string, contents []byte, knownRules []string) (*Config, error)
+    ParseConfigBytes validates one bounded strict YAML policy snapshot. The path
+    determines the root for repository-relative configuration and is not read.
+
 func (config Config) Validate(knownRules []string) error
     Validate checks a decoded configuration against the governed rule IDs.
 

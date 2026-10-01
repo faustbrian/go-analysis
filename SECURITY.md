@@ -4,7 +4,8 @@
 
 Security fixes target the latest stable v1 release and
 the current `main` branch. Older snapshots may not receive patches. Consumers
-should pin an exact release artifact and checksum, then update deliberately.
+should pin an exact module version and verify its public checksum and trusted
+tag, then update deliberately.
 
 ## Report a vulnerability
 
@@ -34,6 +35,8 @@ The suite complements gosec, govulncheck, CodeQL, dependency review, race
 testing, and fuzzing. It is not a sandbox, compiler, malware scanner, or proof
 of memory safety.
 
-Release artifacts should be built with `make reproducible`, checksummed, and
-signed by the publishing environment when signing is available. Consumers
-should verify the published checksum before execution.
+The supported local reproducibility check is
+`./scripts/reproducible-build.sh`; candidate archive verification uses
+`./scripts/verify-release.sh <version>`. The current repository workflow does
+not publish archives. If a release has attached archives, consumers should
+verify their published checksums before execution.
