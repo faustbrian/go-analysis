@@ -6,6 +6,8 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+## 1.2.1 - 2026-10-02
+
 ### Changed
 
 - Refresh `golang.org/x/tools` to v0.50.0 and its dependencies:
