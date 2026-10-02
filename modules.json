@@ -485,7 +485,7 @@
           "release": "not-started"
         }
       },
-      "version": "1.2.0",
+      "version": "1.2.1",
       "tag_prefix": "v",
       "owned_dependencies": [],
       "reverse_owned_dependencies": [],
