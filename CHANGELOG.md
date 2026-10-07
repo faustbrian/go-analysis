@@ -6,6 +6,8 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+## 1.2.2 - 2026-10-07
+
 ### Changed
 
 - Update the Go analysis and package-loading dependency to
