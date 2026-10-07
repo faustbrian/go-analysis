@@ -6,6 +6,11 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+### Changed
+
+- Update the Go analysis and package-loading dependency to
+  `golang.org/x/tools` v0.51.0.
+
 ## 1.2.1 - 2026-10-02
 
 ### Changed
