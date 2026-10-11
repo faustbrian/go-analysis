@@ -146,7 +146,9 @@ ownership.
 
 ## Development
 
-Run `make check`. See [CONTRIBUTING.md](CONTRIBUTING.md) for focused and release
+Use Go 1.27.2 and verified public Tools v2.1.3; minima remain Go 1.27.0.
+`make check` and `make ci` select bounded checks; `make check-full` preserves
+the original full campaigns. See [CONTRIBUTING.md](CONTRIBUTING.md) for focused and release
 verification.
 
 ## Support and security

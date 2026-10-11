@@ -2,7 +2,7 @@
 
 ## Before Editing
 
-1. Read [`AGENTS.md`](AGENTS.md) and the affected module's goals and docs.
+1. Read [`AGENTS.md`](AGENTS.md) and the affected module's current docs.
 2. Run `make inventory` and the narrow baseline gate for the module.
 3. Identify owned dependencies and reverse dependants in `modules.json`.
 4. Preserve unrelated work and generated/corpus provenance.
@@ -31,7 +31,7 @@ source pin is release-blocking; peer behavior cannot silently select policy.
 The root SARIF decisions are recorded in the
 [specification decision register](docs/specification-decisions.md).
 
-Required mutation gates must finish with zero surviving viable mutants.
+Required release mutation gates must finish with zero surviving viable mutants.
 
 Do not add package-local workflows, permanent replacements, machine-specific
 paths, bypass flags, broad mutation exclusions, or aggregate quality metrics
@@ -39,21 +39,69 @@ that hide a failing package.
 
 ## Verification
 
-Run during development:
+Use Go 1.27.2; public module minima remain Go 1.27.0. An isolated checkout
+needs no sibling repositories or coordination goal files. Begin with root
+deterministic tests and one active target when configuration decoding changes,
+using a disposable cache per bounded session:
+
+```bash
+(
+  set -eu
+  GOCACHE="$(mktemp -d)"
+  export GOCACHE
+  trap 'rm -rf "${GOCACHE}"' EXIT
+  GOWORK=off go test ./...
+  GOWORK=off go test ./analysis -run '^$' -fuzz '^FuzzDecodeConfig$' -fuzztime=2s -timeout=2m
+)
+```
+
+Deterministic tests execute fuzz seeds/corpus, not active fuzzing. The
+intentional `testdata/coverage` fixture remains a separate test module, not
+a releasable library. Install the public v2.1.3 binary archive for your platform
+from [go-library-tools releases](https://github.com/faustbrian/go-library-tools/releases/tag/v2.1.3),
+checking `checksums.txt` against `.golib.yaml` and the archive against that
+checksum set. Put the extracted `golib` binary on `PATH`, or select it through
+`GOLIB`; do not build Tools from source. CI uses this public release while
+checking out its immutable reusable workflow source.
+
+Run adjacent commands in one disposable-cache session as shown above:
 
 ```bash
 make inventory
 make check
+make ci
+make specification-check
+golib mutation --module . --package ./analysis
 ```
 
-Before submitting a repository-wide change:
+`make check` and `make ci` select the bounded contract. A non-race, once-only
+one-minute report-writer check rejects absolute/traversal diagnostic and
+suppression paths and verifies SARIF contains no source/snippet fields.
+It is not certification of every analyzer, workspace or source-disclosure
+path. Base-free checks run seeds/corpus; changed-source CI selects causal
+active fuzz smoke. Optional mutation selects one production package, one
+worker and a twenty-minute deadline. Offline specification checking is
+ordinary; no external services or test tags are declared.
+
+Select full qualification and release rehearsal explicitly:
 
 ```bash
-make ci
+make check-full
+make specification-check-online
+make -f verification/package.mk package-specific
+make -f verification/package.mk compatibility
+golib api check
+golib release dry-run --module .
 ```
 
-The full scheduled and release gate is `make ci`. Report every unavailable or
-failing command; do not describe partial results as release-ready.
+Full checks retain all four fuzz targets at 10000x/20m, the 1s/20m benchmark,
+package-specific/toolchain/corpus/performance/reproducibility checks, policy
+documentation, compatibility and report/CLI conformance declarations. The
+coverage fixture, mutation imports and API baseline remain unchanged.
+Scheduled CI uses the shared bounded route, not an automatic full campaign.
+Release packaging remains explicitly selected as described in
+[the release guide](docs/release.md). Report unavailable or failing commands;
+bounded checks alone do not establish release qualification.
 
 ## Adding A Module
 

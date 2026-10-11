@@ -2,7 +2,7 @@
 
 ## Local candidate verification
 
-Install the exact stable patch release recorded in `.go-version`. `make check`
+Install the exact stable patch release recorded in `.go-version`. `make check-full`
 delegates to the pinned shared tooling contract, which checks the active Go
 toolchain before analysis. `make workflows` validates the pinned workflow.
 
@@ -10,7 +10,7 @@ Choose a semantic version without a leading `v`, update the changelog and any
 rule `introduced_version` metadata, then run:
 
 ```sh
-make check
+make check-full
 make ci
 golib release check
 ```
