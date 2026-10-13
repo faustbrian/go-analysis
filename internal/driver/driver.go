@@ -136,9 +136,9 @@ type dependencies struct {
 // ctx must be non-nil; cancellation during checker execution is not observed.
 // No target program or go:generate command is deliberately run, but package
 // loading uses trusted toolchain operations. Report messages/loading errors are
-// not arbitrary-data redaction. Configured severity is applied to analyzer
-// copies, but Report.Rules retains built-in metadata; SARIF therefore uses the
-// built-in severity inventory. Blocking status overrides do affect Blocking.
+// not arbitrary-data redaction. Configured severity reaches run-owned analyzer
+// and report metadata, including disabled rules. DefaultStatus remains registry
+// metadata; only runtime status overrides affect Blocking.
 func Run(ctx context.Context, options Options) (Result, error) {
 	return run(ctx, options, dependencies{
 		registry:        policy.Builtin,
@@ -288,7 +288,7 @@ func run(ctx context.Context, options Options, dependencies dependencies) (Resul
 	report := shared.Report{
 		ToolVersion:  version.Value,
 		Root:         config.Root,
-		Rules:        registryRules(registry),
+		Rules:        registryRules(registry, config),
 		Diagnostics:  diagnostics,
 		Exceptions:   exceptions,
 		Suppressions: suppressions,
@@ -890,11 +890,15 @@ func repositoryPathWithRel(
 	return filepath.ToSlash(relative), nil
 }
 
-func registryRules(registry *policy.Registry) []shared.Rule {
+func registryRules(registry *policy.Registry, config *shared.Config) []shared.Rule {
 	entries := registry.Entries()
 	rules := make([]shared.Rule, 0, len(entries))
 	for _, entry := range entries {
-		rules = append(rules, entry.Rule)
+		rule := entry.Rule
+		if configured, ok := config.Rules[rule.ID]; ok && configured.Severity != "" {
+			rule.Severity = configured.Severity
+		}
+		rules = append(rules, rule)
 	}
 
 	return rules

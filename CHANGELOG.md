@@ -4,6 +4,41 @@ All notable changes to this project are documented here. The project follows
 semantic versioning; compatibility decisions are described in
 [the compatibility policy](docs/compatibility.md).
 
+## 1.2.3 - 2026-10-13
+
+This entry records a prepared compatible patch; publication is separate. Adopt
+`github.com/faustbrian/go-analysis@v1.2.3` only after its public tag and module
+are available. Severity overrides now affect reporting; status overrides remain
+independent and still determine whether the command exits for blocking findings.
+
+### Fixed
+
+- Propagate configured rule severity into report inventories, JSON and SARIF
+  descriptors and result levels without changing registry defaults or runtime
+  blocking/status policy.
+
+### Source accountability
+
+The prepared patch includes these twelve non-merge source commits after public
+v1.2.2 (`acd2af4729d885493b9d26c9295525bd738decd8`) through
+`70b8c0c5f7d663be361833ddb5ea6588a969ee7c`. The current reporting repair is outside
+that frozen range. The retained Unreleased documentation entry describes the
+formerly observed propagation limitation, now resolved above; prior release
+notes and other pending entries remain unchanged.
+
+- [98cd8e0f17](https://github.com/faustbrian/go-analysis/commit/98cd8e0f179ec9d5eba8bca2366ec426a1bc3fc0),
+  [5a0d6a4774](https://github.com/faustbrian/go-analysis/commit/5a0d6a4774ba8437be22627a8472c58b5d5b5fc0),
+  [4e1a3864cd](https://github.com/faustbrian/go-analysis/commit/4e1a3864cdac65ce4909d15e0ea05d87d12e8130).
+- [4e87181bc0](https://github.com/faustbrian/go-analysis/commit/4e87181bc0225f8251ef89e790901f064444e9bc),
+  [ac72f91f1d](https://github.com/faustbrian/go-analysis/commit/ac72f91f1d39c17216b3f05d32ba7a8704de6609),
+  [d52797a69f](https://github.com/faustbrian/go-analysis/commit/d52797a69f7457187680f0ba1b5f3c2172b3f530).
+- [d4d8de98b8](https://github.com/faustbrian/go-analysis/commit/d4d8de98b884095ab81dcb3065265b55d27bb697),
+  [a39dc6661c](https://github.com/faustbrian/go-analysis/commit/a39dc6661c6c7e7211935a3758e6145a6eebe137),
+  [a818edc194](https://github.com/faustbrian/go-analysis/commit/a818edc194bd5938fc6c4a2e6bbe2246a431d3e7).
+- [c0514f2dce](https://github.com/faustbrian/go-analysis/commit/c0514f2dce35f1a8385cc24f55cfa4fa5f600171),
+  [ae7ea62850](https://github.com/faustbrian/go-analysis/commit/ae7ea628509c4758e64201f061a21e5084209a63),
+  [70b8c0c5f7](https://github.com/faustbrian/go-analysis/commit/70b8c0c5f7d663be361833ddb5ea6588a969ee7c).
+
 ## Unreleased
 
 ### Documentation

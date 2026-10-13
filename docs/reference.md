@@ -85,10 +85,10 @@ For CI, write SARIF to a file and let the CI platform upload it:
 The project does not upload reports itself and does not require repository or
 cloud credentials.
 
-Configured severity overrides currently modify analyzer metadata copies but do
-not reach the driver's built-in `Report.Rules` inventory or SARIF levels. Status
-overrides do control blocking. This is an existing propagation limitation, not
-an intentional interpretation of SARIF or a conformance result.
+Configured severity overrides reach the driver's run-owned `Report.Rules`, JSON
+and SARIF descriptors and result levels. The inventory still includes disabled
+rules and retains registry `DefaultStatus` metadata. Only runtime status controls
+blocking; severity overrides do not mutate exported rules or the registry.
 
 Package loading observes context; checker execution does not accept it. A
 cancelled configuration read cannot preempt an already blocked filesystem call

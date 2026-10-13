@@ -164,10 +164,10 @@ rules:
 Statuses are `disabled`, `advisory`, or `blocking`. Every blocking override
 requires a semantic `promotion.version` and a non-empty `promotion.evidence`
 record. Severities are `info`, `warning`, or `error`. Only status controls the
-blocking exit code. The current driver accepts severity overrides in analyzer
-metadata copies but emits built-in rule severities in JSON/SARIF; the override
-does not yet propagate to those report levels. This existing limitation is not
-an intentional policy or specification interpretation.
+blocking exit code. Configured severity reaches the run's rule inventory,
+JSON and SARIF descriptors and result levels, including descriptors for disabled
+rules. The rule's `DefaultStatus` remains the registry default, not the runtime
+status override. Configuration does not mutate exported rules or the registry.
 
 Layer and bounded-context names use lower-kebab-case. Each `may_import` list
 names other partitions that may be imported; imports within the same layer or
