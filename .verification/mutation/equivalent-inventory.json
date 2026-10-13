@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "module_directory": ".",
+      "package_directory": "cmd/golib-analysis",
+      "source_digest": "209279c1f679c2fc7cff6d67b2d3cc7f14b3816b3d20d000c073e668fd6ec1e9",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "390cf4085a0063fe5dcaa29ce942ea4cb8c7876347da90376b65dc8c5c811104",
+      "mutations": [
+        {
+          "file_name": "main.go",
+          "type": "CONDITIONALS_NEGATION",
+          "line": 97,
+          "column": 56,
+          "contract_domain": "Configured and raw public CLI command-error reporting with supported writer and exit callbacks; diagnostic output, original collaborator panics, exit code and write/exit call counts are observable; internal caller stack locations are not a promised output format.",
+          "reason": "Independent mathematical source review by /root/schema_repair at production source 7ebea23a1c84eb0f08cd1b6207965482238db08c, performed 2026-10-14 Europe/Helsinki (2026-10-13 UTC). Fmt.Fprintln executes once with identical arguments before the predicate in both forms. Whether its result is nil or an error, the true branch calls exit(2) once and returns; the false branch reaches the identical exit(2) at the function tail with no intervening work or defer. Negating writeErr!=nil swaps these two observationally identical paths. A writer panic propagates before either predicate, and a panicking or nonreturning exit callback receives code 2 identically. No error, output, state or cleanup is otherwise changed. This source proof applies only to the named coordinate and operator; the three one-MiB inclusive admission boundary mutants are viable and explicitly excluded. Expires 2026-11-14 or any earlier relevant error-report/exit contract, owning source, dependency, compiler/platform, mutation producer/verifier or checker-policy change. Source and verifier bindings remain mandatory; this is not a newly executed mutation campaign result."
+        }
+      ]
+    }
+  ]
+}

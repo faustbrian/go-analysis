@@ -745,3 +745,30 @@ func writeCheckModule(t *testing.T, status string) (string, string) {
 
 	return root, filepath.Join(root, "analysis.yml")
 }
+
+func TestPolicySyncAdmitsExactByteLimit(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+	canonical := filepath.Join(directory, "canonical.yml")
+	local := filepath.Join(directory, "analysis.yml")
+	prefix := []byte("version: 1\n#")
+	contents := append(prefix, bytes.Repeat([]byte{'x'}, maxPolicySyncBytes-len(prefix))...)
+	for _, path := range []string{canonical, local} {
+		if err := os.WriteFile(path, contents, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var output bytes.Buffer
+	handled, err := runUtilityContext(context.Background(),
+		[]string{"sync-policy", "check", canonical, local}, &output)
+	if !handled || err != nil || output.String() != "policy in sync\n" {
+		t.Fatalf("sync-policy exact byte limit = %t, %q, %v", handled, output.String(), err)
+	}
+	for _, path := range []string{canonical, local} {
+		got, readErr := os.ReadFile(path) // #nosec G304 -- test-owned temporary path
+		if readErr != nil || !bytes.Equal(got, contents) {
+			t.Fatalf("sync-policy changed exact-limit input: %v", readErr)
+		}
+	}
+}
