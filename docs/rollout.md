@@ -1,5 +1,7 @@
 # Repository rollout and advisory promotion
 
+[Documentation index](README.md)
+
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
 "OPTIONAL" in this document are to be interpreted as described in BCP 14
@@ -85,3 +87,5 @@ continues. It MUST NOT hide diagnostics, mutate their severity to control exit
 status, or disable the canonical external tool. The follow-up MUST preserve the
 failing fixture and classify whether code, configuration, or analyzer semantics
 were wrong.
+
+Continue with [Command and API reference](reference.md).

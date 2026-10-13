@@ -1,5 +1,7 @@
 # Source documentation audit
 
+[Documentation index](README.md)
+
 ## Pre-edit outcome, owner and checks
 
 Base `a818edc194bd5938fc6c4a2e6bbe2246a431d3e7`, clean detached main-source
@@ -297,3 +299,5 @@ routes. Ordinary shared CI selects strict source-documentation checking and
 requires its result. Native prerequisites, operation budgets, security and
 release controls are retained. Hosted exact-head evidence is recorded by the
 coordination ledger; configuration alone does not establish green delivery.
+
+Continue with [Command and API reference](reference.md).

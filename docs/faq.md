@@ -1,5 +1,7 @@
 # Frequently asked questions
 
+[Documentation index](README.md)
+
 ## Why are rules advisory by default?
 
 Fixture precision is not corpus precision. Blocking promotion requires clean,
@@ -32,3 +34,5 @@ generated header before the package declaration.
 
 No. Keep the compiler, vet, Staticcheck, golangci-lint, gosec, govulncheck,
 CodeQL, race tests, fuzzing, NilAway, and human review in their documented roles.
+
+Continue with [Command and API reference](reference.md).

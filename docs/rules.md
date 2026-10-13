@@ -1,5 +1,7 @@
 # Rule catalog
 
+[Documentation index](README.md)
+
 All rules are advisory by default. A repository may promote a rule through the
 versioned `rules` map only after corpus evidence and migration work. The exact
 diagnostic location is the violating import, declaration, call, field, or
@@ -540,3 +542,5 @@ slog.String("token", token.Redacted()) // good explicit representation
 Pointers, arrays, slices, and maps containing configured types retain the
 sensitive evidence. Explicit conversion to an unannotated type is not guessed
 at; organizations should expose reviewed redaction APIs instead.
+
+Continue with [Command and API reference](reference.md).

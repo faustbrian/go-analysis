@@ -1,5 +1,7 @@
 # Security and threat model
 
+[Documentation index](README.md)
+
 Model version 1 (2026-09-30) describes the analyzer behavior in the signed
 `v1.2.0` source at `3bfc234fb561ae1f1c9d45a72a9fe1f2c1849930` and on
 `main` until a behavior change supersedes it. This post-release risk

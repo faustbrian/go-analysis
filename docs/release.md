@@ -1,5 +1,7 @@
 # Release process
 
+[Documentation index](README.md)
+
 ## Local candidate verification
 
 Install the exact stable patch release recorded in `.go-version`. `make check-full`
@@ -55,3 +57,5 @@ wrong, publish a new patch version with a changelog entry. Do not replace
 archives or checksums under an existing version. A withdrawn release may be
 marked clearly, but its tag and any artifacts remain available for audit
 unless security response requires a documented exception.
+
+Continue with [Command and API reference](reference.md).

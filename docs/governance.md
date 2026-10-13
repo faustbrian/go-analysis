@@ -1,5 +1,7 @@
 # Rule governance and conflict prevention
 
+[Documentation index](README.md)
+
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
 "OPTIONAL" in this document are to be interpreted as described in BCP 14
@@ -90,3 +92,5 @@ renaming a rule, changing a diagnostic's semantic trigger, or tightening a
 configuration schema requires an explicit versioned compatibility decision and
 migration guidance. Diagnostic prose MAY improve when the rule ID, location,
 and violation semantics remain stable.
+
+Continue with [Command and API reference](reference.md).

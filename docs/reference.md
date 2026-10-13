@@ -1,5 +1,7 @@
 # Command and API reference
 
+[Documentation index](README.md)
+
 ## Commands
 
 `golib-analysis check -config <path> [-root <absolute-path>]

@@ -1,5 +1,7 @@
 # Configuration
 
+[Documentation index](README.md)
+
 Applications load policy files with
 `analysis.LoadConfigContext(ctx, path, knownRules)`. Cancellation is observed
 before and between filesystem operations. The older `analysis.LoadConfig`

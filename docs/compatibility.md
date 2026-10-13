@@ -1,5 +1,7 @@
 # Compatibility policy
 
+[Documentation index](README.md)
+
 The public compatibility surface includes rule IDs and trigger semantics,
 metadata and owners, configuration keys and validation, suppression syntax,
 JSON and SARIF fields, command arguments and exit codes, and exported Go APIs.

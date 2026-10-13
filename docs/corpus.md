@@ -1,5 +1,7 @@
 # Corpus precision and performance
 
+[Documentation index](README.md)
+
 `./scripts/corpus.sh check corpus/manifest.tsv` runs every entry in
 `corpus/manifest.tsv` as a complete module,
 once with normal package parallelism and once with `-sequential`. The reports
@@ -123,3 +125,5 @@ concurrent uncommitted work:
 ```sh
 OWNED_CORPUS_SOURCE=head ./scripts/owned_corpus.sh
 ```
+
+Continue with [Command and API reference](reference.md).

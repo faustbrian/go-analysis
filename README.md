@@ -2,9 +2,7 @@
 
 [![CI](https://github.com/faustbrian/go-analysis/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-analysis/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-analysis/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
-[![Mutation](https://img.shields.io/badge/mutation-100%25_required-blue)](CONTRIBUTING.md#verification)
-[![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
+[![Documentation](https://img.shields.io/badge/docs-structural_checks_in_CI-blue)](docs/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-analysis.svg)](https://pkg.go.dev/github.com/faustbrian/go-analysis)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-analysis?sort=semver)](https://github.com/faustbrian/go-analysis/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
@@ -40,8 +38,8 @@ guides are [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md),
 [release process](docs/release.md), [compatibility policy](docs/compatibility.md),
 [custom-rule design](docs/custom-rules.md), and [FAQ](docs/faq.md).
 Shared construction, ownership, lifecycle, and composition expectations follow
-the versioned [v1.4.0 Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)
-and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
+the versioned [v1.8.4 Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md)
+and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/design-language.md#package-families-and-selection).
 
 ## Requirements
 

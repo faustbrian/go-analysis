@@ -1,5 +1,7 @@
 # Organization hardening evidence
 
+[Documentation index](README.md)
+
 This page is the package-owned index for rule precision, promotion, and release
 evidence. Shared repository verification is pinned in [`.golib.yaml`](../.golib.yaml)
 and executed by `go-library-tools`; private corpus and mutation artifacts are
@@ -46,3 +48,5 @@ reports may contain repository metadata and must be reviewed before publication.
 
 The release gate must be fresh at the candidate commit. Local success does not
 prove hosted CI or release readiness; the pinned workflow remains authoritative.
+
+Continue with [Command and API reference](reference.md).

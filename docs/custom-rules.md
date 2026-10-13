@@ -1,5 +1,7 @@
 # Designing custom rules
 
+[Documentation index](README.md)
+
 Prefer organization configuration for package names, layers, adapters, typed
 sinks, constructors, and exceptions. Forking a generic analyzer only to embed a
 repository path makes reusable analysis harder to govern.
@@ -18,3 +20,5 @@ Repository-only checks may live outside this project and consume the public
 `analysis` models, but they should follow the same overlap review, exact
 diagnostic, suppression, mutation, determinism, and corpus-evidence standards.
 Do not execute target code or arbitrary configuration to extend analysis.
+
+Continue with [Command and API reference](reference.md).
