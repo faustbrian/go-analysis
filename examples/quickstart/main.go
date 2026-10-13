@@ -1,5 +1,7 @@
 // Command quickstart demonstrates context-aware policy loading with the public
-// analysis and policy packages.
+// analysis and policy packages. It validates shared policy structure and prints
+// an inventory count, not analyzer-specific configuration or target findings.
+// The caller owns output; this command does not load or execute target packages.
 package main
 
 import (

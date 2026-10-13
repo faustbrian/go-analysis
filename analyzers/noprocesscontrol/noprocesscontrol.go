@@ -1,4 +1,14 @@
 // Package noprocesscontrol restricts process termination to entrypoints.
+//
+// Use New or Analyzer for builtin panic and selected os.Exit/log.Fatal calls.
+// Exact approved packages, .test packages and _test.go files are exempt.
+// Function-value indirection and every possible process-termination API are not
+// covered.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package noprocesscontrol
 
 import (
@@ -14,6 +24,8 @@ const ruleID = "lifecycle/no-process-control"
 
 // Options configures approved composition-root packages.
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
@@ -38,6 +50,8 @@ var Rule = shared.Rule{
 var Analyzer = New(Options{})
 
 // New constructs an independently configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) *analysis.Analyzer {
 	allowed := make(map[string]struct{}, len(options.AllowedPackages))
 	for _, packagePath := range options.AllowedPackages {

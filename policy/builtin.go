@@ -25,7 +25,9 @@ import (
 	"github.com/faustbrian/go-analysis/analyzers/transactionrollback"
 )
 
-// Builtin returns the governed inventory shipped by this module.
+// Builtin validates the shipped advisory rule inventory on each call. Exported
+// analyzer Rule records supply its metadata and nested maps remain borrowed;
+// callers must not mutate that shared metadata concurrently. No analyzer runs.
 func Builtin() (*Registry, error) {
 	return NewRegistry([]Entry{
 		{

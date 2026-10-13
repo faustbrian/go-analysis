@@ -1,5 +1,14 @@
 // Package mutableglobal reports package variables that hold shared mutable
 // state rather than immutable scalar values.
+//
+// Use New for selected package trees. Type shape, not actual mutation, governs
+// composite package variables; scalar exemptions are not an immutability or
+// race-freedom proof.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package mutableglobal
 
 import (
@@ -19,11 +28,14 @@ const ruleID = "safety/no-mutable-global"
 
 // Policy selects one package tree for shared-state enforcement.
 type Policy struct {
+	// Package selects an exact import path or trailing /... package tree.
 	Package string
 }
 
 // Options configures package trees governed by shared-state policy.
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
 
@@ -57,6 +69,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates policies and constructs an independently configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	policies := make([]compiledPolicy, 0, len(options.Policies))
 	for _, policy := range options.Policies {

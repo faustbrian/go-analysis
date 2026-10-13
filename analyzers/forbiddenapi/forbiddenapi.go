@@ -1,4 +1,13 @@
 // Package forbiddenapi enforces organization-specific API migrations.
+//
+// Use New to match resolved direct callable references in call expressions. It
+// emits replacement guidance, not a SuggestedFix or a general function-value
+// call-flow analysis.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package forbiddenapi
 
 import (
@@ -17,14 +26,22 @@ const ruleID = "api/forbidden-call"
 
 // Policy identifies one exact callable and its approved replacement.
 type Policy struct {
-	Package         string
-	Symbol          string
-	Replacement     string
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Replacement is non-empty remediation text, not an automatically applied code
+	// fix.
+	Replacement string
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
 // Options configures organization-specific API migrations.
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
 
@@ -59,6 +76,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates migration policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	configured := make(map[symbolKey]compiledPolicy, len(options.Policies))
 	for _, policy := range options.Policies {

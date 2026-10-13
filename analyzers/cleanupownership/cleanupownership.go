@@ -1,4 +1,13 @@
 // Package cleanupownership detects discarded cleanup results from configured constructors.
+//
+// Use New to reject blank or wholly ignored configured cleanup results. A named
+// binding is accepted without proving invocation, deferral, transfer or eventual
+// resource release.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package cleanupownership
 
 import (
@@ -17,14 +26,22 @@ const ruleID = "lifecycle/cleanup-ownership"
 
 // Constructor identifies one exact callable and its cleanup result position.
 type Constructor struct {
-	Package         string
-	Symbol          string
-	CleanupResult   int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// CleanupResult selects the zero-based cleanup result; binding it does not prove
+	// eventual cleanup.
+	CleanupResult int
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
 // Options configures cleanup ownership contracts.
 type Options struct {
+	// Constructors lists exact cleanup-producing callables; nil makes this check
+	// inactive.
 	Constructors []Constructor
 }
 
@@ -59,6 +76,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates cleanup ownership policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	constructors := make(map[symbolKey]compiledConstructor, len(options.Constructors))
 	for _, constructor := range options.Constructors {

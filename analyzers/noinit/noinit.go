@@ -1,4 +1,13 @@
 // Package noinit requires explicit construction instead of package init.
+//
+// Use New or Analyzer to report init declarations outside exact approved
+// packages. Package variable initialization remains a separate concern; the
+// analyzer does not execute initialization.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package noinit
 
 import (
@@ -12,6 +21,8 @@ const ruleID = "lifecycle/no-init"
 
 // Options configures packages with a reviewed need for init.
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
@@ -36,6 +47,8 @@ var Rule = shared.Rule{
 var Analyzer = New(Options{})
 
 // New constructs an independently configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) *analysis.Analyzer {
 	allowed := make(map[string]struct{}, len(options.AllowedPackages))
 	for _, packagePath := range options.AllowedPackages {

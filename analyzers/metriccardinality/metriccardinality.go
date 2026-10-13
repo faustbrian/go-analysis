@@ -1,5 +1,15 @@
 // Package metriccardinality detects configured high-cardinality typed values
 // passed to configured metric label positions.
+//
+// Use New or NewLabelName for declared type/call-position policies. Matching
+// follows aliases, pointers and containers to configured named types, not
+// arbitrary runtime cardinality or flow through already-erased values. Direct
+// conversion syntax retains source-type evidence. No metric is emitted or sampled.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package metriccardinality
 
 import (
@@ -22,8 +32,10 @@ const (
 // HighCardinalityType identifies a named type that must not become a metric
 // label without an explicit reviewed transformation.
 type HighCardinalityType struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
-	Name    string
+	// Name names the exact declared Go type, with aliases resolved during analysis.
+	Name string
 }
 
 // AttackerControlledType identifies a named type proven to carry untrusted
@@ -32,23 +44,37 @@ type AttackerControlledType = HighCardinalityType
 
 // Sink identifies metric label argument positions on an exact callable.
 type Sink struct {
-	Package      string
-	Symbol       string
-	Arguments    []int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Arguments lists zero-based call-expression argument positions; method-
+	// expression receivers participate.
+	Arguments []int
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
 	VariadicFrom *int
 }
 
 // Options configures high-cardinality types and metric label sinks.
 type Options struct {
+	// HighCardinalityTypes identifies named types carrying unbounded label values,
+	// not observed metric populations.
 	HighCardinalityTypes []HighCardinalityType
-	Sinks                []Sink
+	// Sinks selects exact metric or disclosure calls and argument positions; nil
+	// checks none.
+	Sinks []Sink
 }
 
 // LabelNameOptions configures attacker-controlled types and metric label-name
 // sink positions.
 type LabelNameOptions struct {
+	// AttackerControlledTypes identifies named types governed as untrusted label
+	// names, not a general taint proof.
 	AttackerControlledTypes []AttackerControlledType
-	Sinks                   []Sink
+	// Sinks selects exact metric or disclosure calls and argument positions; nil
+	// checks none.
+	Sinks []Sink
 }
 
 type symbolKey struct {
@@ -112,6 +138,8 @@ var Analyzer, _ = New(Options{})
 var LabelNameAnalyzer, _ = NewLabelName(LabelNameOptions{})
 
 // New validates typed metric policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	return newMetricAnalyzer(
 		"metriccardinality",

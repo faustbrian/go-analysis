@@ -2,6 +2,9 @@ package analysistestkit
 
 import "testing"
 
+// FuzzAnalyzersNoPanic bounds source to 64 KiB, discards parse/type errors, then
+// requires configured analyzers to run without error or panic. Diagnostics are
+// discarded; this is robustness, not a precision/completeness oracle.
 func FuzzAnalyzersNoPanic(f *testing.F) {
 	f.Add(representativeSource)
 	f.Add("package fuzzpkg\nfunc Empty() {}\n")

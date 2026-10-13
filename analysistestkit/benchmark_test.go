@@ -2,6 +2,9 @@ package analysistestkit
 
 import "testing"
 
+// BenchmarkAnalyzers times each Run on one pre-parsed, typed representative
+// pass with requirements prepared before timing. Diagnostics are discarded;
+// package loading and cold toolchain setup are not part of this comparison.
 func BenchmarkAnalyzers(b *testing.B) {
 	pass, err := buildPass(representativeSource)
 	if err != nil {
@@ -23,6 +26,8 @@ func BenchmarkAnalyzers(b *testing.B) {
 	}
 }
 
+// BenchmarkAggregate times all configured Runs serially on that same warm
+// representative pass. This is not concurrent driver or whole-repository cost.
 func BenchmarkAggregate(b *testing.B) {
 	pass, err := buildPass(representativeSource)
 	if err != nil {

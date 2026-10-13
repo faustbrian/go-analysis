@@ -1,5 +1,14 @@
 // Package interfaceplacement enforces consumer-owned public interfaces in
 // configured provider package trees.
+//
+// Use New for non-overlapping provider package patterns. Exported aliases and
+// embedded value interfaces are included; constraint-only interfaces are
+// excluded. Consumers are not discovered and moved automatically.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package interfaceplacement
 
 import (
@@ -20,6 +29,8 @@ const ruleID = "api/interface-placement"
 // Options configures provider package trees that must not own public value
 // interfaces.
 type Options struct {
+	// Packages lists non-overlapping provider package patterns; a trailing /...
+	// includes descendants.
 	Packages []string
 }
 
@@ -49,6 +60,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates provider package patterns and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	packages := make([]packagePattern, 0, len(options.Packages))
 	for _, configured := range options.Packages {

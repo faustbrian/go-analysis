@@ -11,8 +11,10 @@ rules and optional fields are minor changes, compatible fixes are patch changes,
 and removals, renames, stricter existing policy, or report/schema breakage require
 a major version.
 
-`golib api check` compares the current exported documentation and complete rule
-inventory with reviewed files under `compat`. An intentional change uses
+`golib api check` compares exported signatures against `api/baseline.txt`.
+Separately, `./scripts/compatibility.sh check` compares native full GoDoc and the
+complete rule inventory with reviewed files under `compat`. An intentional
+change uses
 `./scripts/compatibility.sh update`; reviewers inspect both snapshots and the
 changelog.
 Snapshot regeneration does not itself make a change compatible.

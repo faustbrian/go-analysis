@@ -1,5 +1,16 @@
-// Package backenderror prevents configured backend errors from crossing
-// exported API boundaries without an explicit classification step.
+// Package backenderror reports discovered configured backend error origins
+// crossing exported API boundaries without an explicit classification step.
+//
+// Use New to trace configured error origins across exported functions and
+// methods of exported types. Tracing follows selected intraprocedural SSA forms
+// and explicit wrappers, visits at most 256 values per returned error, and
+// silently stops beyond that bound. Unknown/dynamic callees are not an
+// interprocedural ownership proof.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package backenderror
 
 import (
@@ -24,25 +35,41 @@ const (
 
 // Flow identifies one result from an exact backend callable.
 type Flow struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
-	Symbol  string
-	Result  int
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int
 }
 
 // Passthrough identifies a callable result that preserves errors from exact
 // argument positions.
 type Passthrough struct {
-	Package      string
-	Symbol       string
-	Result       int
-	Arguments    []int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int
+	// Arguments lists zero-based explicit parameter positions; the SSA method
+	// receiver is excluded, including method-expression calls.
+	Arguments []int
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
 	VariadicFrom *int
 }
 
 // Options configures exported boundary packages and backend error provenance.
 type Options struct {
-	Boundaries   []string
-	Sources      []Flow
+	// Boundaries lists non-overlapping exact packages or trailing /... trees with
+	// exported error boundaries.
+	Boundaries []string
+	// Sources identifies exact backend call results to trace; nil makes this check
+	// inactive.
+	Sources []Flow
+	// Passthroughs identifies explicitly trusted wrapper result/argument flow, not
+	// arbitrary callee bodies.
 	Passthroughs []Passthrough
 }
 
@@ -100,6 +127,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates backend error policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	boundaries, err := compileBoundaries(options.Boundaries)
 	if err != nil {
@@ -244,6 +273,8 @@ func reportFunction(
 }
 
 func (trace *tracer) value(value ssa.Value) {
+	// This is bounded evidence discovery, not a proof of no backend origin.
+	// Budget exhaustion leaves undiscovered flows unreported.
 	if value == nil || trace.visitedCount >= maximumTraceNodes {
 		return
 	}

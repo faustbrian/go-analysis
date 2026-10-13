@@ -1,4 +1,13 @@
 // Package nobackground restricts root context creation to composition roots.
+//
+// Use New or Analyzer for resolved context.Background, TODO and WithoutCancel
+// calls. Exact approved packages and _test.go files are exempt. No context is
+// created and no body-level propagation is proved.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package nobackground
 
 import (
@@ -14,6 +23,8 @@ const ruleID = "context/no-background"
 
 // Options configures packages that own root context creation.
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
@@ -38,6 +49,8 @@ var Rule = shared.Rule{
 var Analyzer = New(Options{})
 
 // New constructs an independently configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) *analysis.Analyzer {
 	allowed := make(map[string]struct{}, len(options.AllowedPackages))
 	for _, packagePath := range options.AllowedPackages {

@@ -250,6 +250,8 @@ func configuredAnalyzers(tb testing.TB) []*analysis.Analyzer {
 	}
 }
 
+// prepareRequirements caches prerequisite results in the one borrowed pass.
+// Reusing this setup excludes prerequisite construction from warm Run timings.
 func prepareRequirements(
 	tb testing.TB,
 	pass *analysis.Pass,
@@ -276,6 +278,9 @@ func prepareRequirements(
 	}
 }
 
+// buildPass makes a single-file in-memory pass with fixed amd64 type sizes and
+// ignored diagnostics/facts. It is not the real package-loading driver, and its
+// mutable Analyzer/ResultOf fields require serial use by this harness.
 func buildPass(source string) (*analysis.Pass, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(

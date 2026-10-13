@@ -9,6 +9,9 @@ import (
 	shared "github.com/faustbrian/go-analysis/analysis"
 )
 
+// FuzzReportWriters bounds caller strings to 64 KiB and exercises both writers.
+// Successful output must be JSON without source/snippet keys; rejected paths
+// are allowed. This is not full SARIF schema, secret-redaction or size proof.
 func FuzzReportWriters(f *testing.F) {
 	f.Add("security/no-unsafe", "internal/unsafe.go", "unsafe import")
 	f.Add("rule\"</script>", "name with spaces.go", "message\nwith controls\x00")

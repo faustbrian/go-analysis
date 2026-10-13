@@ -1,4 +1,13 @@
 // Package nodefaulthttp forbids process-global HTTP clients and transports.
+//
+// Use Analyzer for resolved DefaultClient/DefaultTransport uses. Recognized
+// DefaultTransport assertions directly cloned through Clone are allowed as owned
+// construction; subsequent timeout and shutdown behavior is not proved.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package nodefaulthttp
 
 import (

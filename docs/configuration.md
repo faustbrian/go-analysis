@@ -161,8 +161,11 @@ rules:
 
 Statuses are `disabled`, `advisory`, or `blocking`. Every blocking override
 requires a semantic `promotion.version` and a non-empty `promotion.evidence`
-record. Severities are `info`, `warning`, or `error`. A severity affects
-reports; only status controls the blocking exit code.
+record. Severities are `info`, `warning`, or `error`. Only status controls the
+blocking exit code. The current driver accepts severity overrides in analyzer
+metadata copies but emits built-in rule severities in JSON/SARIF; the override
+does not yet propagate to those report levels. This existing limitation is not
+an intentional policy or specification interpretation.
 
 Layer and bounded-context names use lower-kebab-case. Each `may_import` list
 names other partitions that may be imported; imports within the same layer or
@@ -246,7 +249,9 @@ Applied exceptions are retained in deterministic JSON and SARIF inventories.
 
 ## Suppressions
 
-A suppression applies only to a diagnostic on the immediately following line.
+A suppression applies only to a diagnostic on the line after its entire parsed
+comment group. Other contiguous comments after the directive move that target;
+blank lines are not skipped. Expiry is inclusive through the named UTC date.
 It must name one known rule and contain a non-empty reason:
 
 ```go

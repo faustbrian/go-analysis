@@ -2,6 +2,8 @@ package analysis
 
 import "testing"
 
+// FuzzDecodeConfig bounds arbitrary YAML to 1 MiB and exercises strict decoding
+// for panic freedom; it does not assert acceptance or a YAML conformance oracle.
 func FuzzDecodeConfig(f *testing.F) {
 	f.Add("version: 1\n")
 	f.Add("version: 1\nunknown: true\n")

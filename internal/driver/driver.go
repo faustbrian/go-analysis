@@ -1,4 +1,11 @@
-// Package driver loads Go packages and executes configured analyzers once.
+// Package driver loads target packages and executes configured analyzers with
+// generated-file, exception and suppression policy. Run is the CLI orchestration
+// seam, not a sandbox or full correctness/ownership/privacy certification.
+// Package loading may invoke the Go toolchain and fetch dependencies under the
+// caller environment; analyzed checkout/toolchain/configuration must be trusted.
+// Context reaches configuration reads and package loading, not checker execution.
+// Results own their outer records; exported metadata and caller options must not
+// be mutated concurrently with a run.
 package driver
 
 import (
@@ -46,16 +53,28 @@ const maxReportEntries = 100_000
 
 // Options controls one complete analysis invocation.
 type Options struct {
+	// ConfigPath selects the required policy file, resolved relative to the process
+	// working directory.
 	ConfigPath string
-	Root       string
-	Patterns   []string
+	// Root optionally overrides analysis directory; non-empty values must be
+	// absolute.
+	Root string
+	// Patterns selects package loader patterns; empty defaults to ./..., with no
+	// test loading requested.
+	Patterns []string
+	// Sequential requests serial checker execution, not a different policy result.
 	Sequential bool
-	Now        time.Time
+	// Now sets the suppression/exception clock; zero uses the current UTC time.
+	Now time.Time
 }
 
 // Result contains normalized findings and whether blocking policy failed.
 type Result struct {
-	Report   shared.Report
+	// Report contains findings after generated exclusions, policy exceptions and
+	// inline suppressions.
+	Report shared.Report
+	// Blocking reports any remaining blocking-status finding, independently of
+	// severity.
 	Blocking bool
 }
 
@@ -108,7 +127,18 @@ type dependencies struct {
 	diagnosticLimit int64
 }
 
-// Run loads target packages once, analyzes them, and applies suppressions.
+// Run loads selected packages, executes enabled analyzers and applies generated
+// exclusions, policy exceptions, then inline suppressions. On any load, analyzer,
+// budget or stale-attribution error it returns zero Result, not partial findings.
+// Its 100000 diagnostic-emission ceiling counts findings before exclusions and
+// suppressions; the checker can keep computing after emission stops. Separate
+// collected inventories are bounded to 100000 entries, not package memory/time.
+// ctx must be non-nil; cancellation during checker execution is not observed.
+// No target program or go:generate command is deliberately run, but package
+// loading uses trusted toolchain operations. Report messages/loading errors are
+// not arbitrary-data redaction. Configured severity is applied to analyzer
+// copies, but Report.Rules retains built-in metadata; SARIF therefore uses the
+// built-in severity inventory. Blocking status overrides do affect Blocking.
 func Run(ctx context.Context, options Options) (Result, error) {
 	return run(ctx, options, dependencies{
 		registry:        policy.Builtin,
@@ -120,7 +150,10 @@ func Run(ctx context.Context, options Options) (Result, error) {
 	})
 }
 
-// Validate checks all analyzer-specific configuration without loading packages.
+// Validate rejects nil, checks shared policy and constructs analyzer policies
+// without loading target packages. It borrows config without mutation; promotion
+// evidence is not authenticated and filesystem/generated-header presence is not
+// checked.
 func Validate(config *shared.Config) error {
 	return validate(config, policy.Builtin)
 }
@@ -185,6 +218,8 @@ func run(ctx context.Context, options Options, dependencies dependencies) (Resul
 	if diagnosticLimit == 0 {
 		diagnosticLimit = maxReportEntries
 	}
+	// Count emissions before trust/suppression filtering, so excluded findings
+	// cannot bypass admission; overflow drops later emissions, not checker work.
 	budget := newDiagnosticBudget(diagnosticLimit)
 	analyzers := make([]*toolanalysis.Analyzer, 0, len(specs))
 	byAnalyzer := make(map[*toolanalysis.Analyzer]analyzerSpec, len(specs))
@@ -802,6 +837,7 @@ func generatedFiles(
 	for _, loadedPackage := range loaded {
 		for _, file := range loadedPackage.Syntax {
 			filename := filepath.Clean(loadedPackage.Fset.Position(file.Pos()).Filename)
+			// A header alone is attacker-controlled metadata, not exclusion authority.
 			if _, allowed := trusted[filename]; allowed && ast.IsGenerated(file) {
 				generated[filename] = struct{}{}
 			}

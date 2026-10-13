@@ -8,6 +8,9 @@ import (
 	shared "github.com/faustbrian/go-analysis/analysis"
 )
 
+// BenchmarkReportWriters times normalization and encoding of the same 1000
+// diagnostic report to io.Discard. Fixture construction is outside timing; JSON
+// and SARIF have different wire shapes and neither measures storage IO.
 func BenchmarkReportWriters(b *testing.B) {
 	report := benchmarkReport(1_000)
 	benchmarks := []struct {

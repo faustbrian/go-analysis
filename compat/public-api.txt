@@ -2,7 +2,17 @@
 
 package analysis // import "github.com/faustbrian/go-analysis/analysis"
 
-Package analysis defines shared contracts used by every analyzer and report.
+Package analysis owns strict policy configuration, rule metadata, attributable
+suppressions and deterministic JSON/SARIF 2.1.0 reporting. LoadConfigContext
+or ParseConfigBytes produces a policy snapshot; analyzer-specific constructors
+validate their own options. This package does not load or execute target code.
+
+Exported records are mutable and caller-owned. Do not mutate shared maps,
+slices or records during validation/reporting. Writers borrow their output and
+copy outer report slices, not nested rule metadata; no callback or IO lifecycle
+is retained. Omitting source/snippet fields is not arbitrary-text redaction:
+configured attribution, diagnostic messages and underlying errors remain data
+the caller must govern. Parser byte limits are not a process-memory budget.
 
 FUNCTIONS
 
@@ -12,43 +22,77 @@ func ApplyPolicyExceptions(
 	exceptions []PolicyException,
 	now time.Time,
 ) ([]Diagnostic, []PolicyException, error)
-    ApplyPolicyExceptions filters exact reviewed exceptions and rejects stale or
-    expired configuration.
+    ApplyPolicyExceptions filters exact rule/package and optional normalized
+    file matches. Expiry is inclusive through its UTC date; attribution and
+    prior Used flags are not authenticated or reset. Use freshly validated
+    configuration. First matching entry wins; unused entries fail with nil
+    findings and an updated copied inventory. Errors can also return that
+    inventory. Inputs are not mutated; with no exceptions the original
+    diagnostics slice is returned unchanged.
 
 func ApplySuppressions(
 	diagnostics []Diagnostic,
 	suppressions []Suppression,
 ) ([]Diagnostic, []Suppression, error)
-    ApplySuppressions filters exact matches and rejects unused directives.
+    ApplySuppressions filters exact rule/filename/target-line matches and
+    updates a copied inventory. It does not revalidate directive syntax,
+    expiry or prior Used flags; normally pass a freshly parsed inventory.
+    Duplicate inputs use the first match. An unused entry returns nil findings,
+    the updated inventory and an error. Inputs are not mutated; retained
+    findings use a new outer slice.
 
 func WriteJSON(writer io.Writer, report Report) error
-    WriteJSON emits a deterministic report without source contents.
+    WriteJSON emits a newline-terminated report with sorted outer inventories
+    and normalized diagnostic/suppression paths. It omits source/snippet fields,
+    but caller messages, attribution, metadata and exception Path remain
+    unsanitized. Validation precedes writing; writer errors may leave partial
+    output. The writer is borrowed, must be non-nil, and is never flushed or
+    closed. Nested rule maps remain shared with the input; do not mutate them
+    during serialization. No byte or entry limit is enforced here.
 
 func WriteSARIF(writer io.Writer, report Report) error
-    WriteSARIF emits a deterministic SARIF 2.1.0 document without snippets.
+    WriteSARIF emits newline-terminated SARIF 2.1.0 with sorted inventories,
+    relative diagnostic/suppression paths and no source/snippet fields.
+    It shares WriteJSON's borrowed-writer, partial-output, mutation and
+    arbitrary-text limits. Unknown diagnostic rule IDs receive warning level
+    rather than being rejected; metadata and SARIF schema conformance are not
+    validated by this writer.
 
 
 TYPES
 
 type BackendClientPolicy struct {
-	Package         string   `yaml:"package" json:"package"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// AllowedPackages lists approved exact import paths or trailing /... trees;
+	// analyzer construction requires at least one.
 	AllowedPackages []string `yaml:"allowed_packages" json:"allowed_packages"`
 }
     BackendClientPolicy restricts a backend package tree to approved adapters.
 
 type BackendErrorFlowPolicy struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string `yaml:"package" json:"package"`
-	Symbol  string `yaml:"symbol" json:"symbol"`
-	Result  int    `yaml:"result" json:"result"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int `yaml:"result" json:"result"`
 }
     BackendErrorFlowPolicy identifies one backend callable result.
 
 type BackendErrorPassthroughPolicy struct {
-	Package      string `yaml:"package" json:"package"`
-	Symbol       string `yaml:"symbol" json:"symbol"`
-	Result       int    `yaml:"result" json:"result"`
-	Arguments    []int  `yaml:"arguments,omitempty" json:"arguments,omitempty"`
-	VariadicFrom *int   `yaml:"variadic_from,omitempty" json:"variadic_from,omitempty"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int `yaml:"result" json:"result"`
+	// Arguments lists zero-based explicit parameter positions; the SSA method
+	// receiver is excluded, including method-expression calls.
+	Arguments []int `yaml:"arguments,omitempty" json:"arguments,omitempty"`
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
+	VariadicFrom *int `yaml:"variadic_from,omitempty" json:"variadic_from,omitempty"`
 }
     BackendErrorPassthroughPolicy identifies a wrapper that preserves errors.
 
@@ -56,80 +100,156 @@ type Category string
     Category groups rules by the engineering policy they enforce.
 
 const (
-	CategoryArchitecture  Category = "architecture"
-	CategoryContext       Category = "context"
-	CategoryHTTP          Category = "http"
-	CategoryLifecycle     Category = "lifecycle"
-	CategorySecurity      Category = "security"
-	CategoryAPI           Category = "api"
-	CategorySafety        Category = "safety"
+	// CategoryArchitecture groups import and package-boundary policy.
+	CategoryArchitecture Category = "architecture"
+	// CategoryContext groups context propagation and storage policy.
+	CategoryContext Category = "context"
+	// CategoryHTTP groups HTTP client ownership policy.
+	CategoryHTTP Category = "http"
+	// CategoryLifecycle groups construction, resource and goroutine lifetime policy.
+	CategoryLifecycle Category = "lifecycle"
+	// CategorySecurity groups unsafe boundaries and typed disclosure policy.
+	CategorySecurity Category = "security"
+	// CategoryAPI groups public API migration and ownership policy.
+	CategoryAPI Category = "api"
+	// CategorySafety groups shared-state policy.
+	CategorySafety Category = "safety"
+	// CategoryObservability groups metric schema and cardinality policy.
 	CategoryObservability Category = "observability"
 )
 type Config struct {
-	Version                   int                             `yaml:"version" json:"version"`
-	Root                      string                          `yaml:"-" json:"root"`
-	Packages                  []PackagePolicy                 `yaml:"packages,omitempty" json:"packages,omitempty"`
-	Entrypoints               []string                        `yaml:"entrypoints,omitempty" json:"entrypoints,omitempty"`
-	InitPackages              []string                        `yaml:"init_packages,omitempty" json:"init_packages,omitempty"`
-	ContextOwners             []string                        `yaml:"context_owners,omitempty" json:"context_owners,omitempty"`
-	HTTPTimeoutExceptions     []string                        `yaml:"http_timeout_exceptions,omitempty" json:"http_timeout_exceptions,omitempty"`
-	Constructors              []ConstructorPolicy             `yaml:"constructors,omitempty" json:"constructors,omitempty"`
-	ResourceConstructors      []ResourceConstructorPolicy     `yaml:"resource_constructors,omitempty" json:"resource_constructors,omitempty"`
-	Transactions              []TransactionPolicy             `yaml:"transactions,omitempty" json:"transactions,omitempty"`
-	LockSensitiveCalls        []LockSensitiveCallPolicy       `yaml:"lock_sensitive_calls,omitempty" json:"lock_sensitive_calls,omitempty"`
-	SensitiveTypes            []SensitiveTypePolicy           `yaml:"sensitive_types,omitempty" json:"sensitive_types,omitempty"`
-	SensitiveSinks            []SensitiveSinkPolicy           `yaml:"sensitive_sinks,omitempty" json:"sensitive_sinks,omitempty"`
-	ForbiddenAPIs             []ForbiddenAPIPolicy            `yaml:"forbidden_apis,omitempty" json:"forbidden_apis,omitempty"`
-	BackendClients            []BackendClientPolicy           `yaml:"backend_clients,omitempty" json:"backend_clients,omitempty"`
-	MutableGlobals            []MutableGlobalPolicy           `yaml:"mutable_globals,omitempty" json:"mutable_globals,omitempty"`
-	InterfaceProviderPackages []string                        `yaml:"interface_provider_packages,omitempty" json:"interface_provider_packages,omitempty"`
-	InterfaceNames            []InterfaceNamePolicy           `yaml:"interface_names,omitempty" json:"interface_names,omitempty"`
-	MetricLabelTypes          []MetricLabelTypePolicy         `yaml:"metric_label_types,omitempty" json:"metric_label_types,omitempty"`
-	MetricLabelSinks          []MetricLabelSinkPolicy         `yaml:"metric_label_sinks,omitempty" json:"metric_label_sinks,omitempty"`
-	MetricLabelNameTypes      []MetricLabelNameTypePolicy     `yaml:"metric_label_name_types,omitempty" json:"metric_label_name_types,omitempty"`
-	MetricLabelNameSinks      []MetricLabelSinkPolicy         `yaml:"metric_label_name_sinks,omitempty" json:"metric_label_name_sinks,omitempty"`
-	BackendErrorBoundaries    []string                        `yaml:"backend_error_boundaries,omitempty" json:"backend_error_boundaries,omitempty"`
-	BackendErrorSources       []BackendErrorFlowPolicy        `yaml:"backend_error_sources,omitempty" json:"backend_error_sources,omitempty"`
-	BackendErrorPassthroughs  []BackendErrorPassthroughPolicy `yaml:"backend_error_passthroughs,omitempty" json:"backend_error_passthroughs,omitempty"`
-	GoroutineFanout           []GoroutineFanoutPolicy         `yaml:"goroutine_fanout,omitempty" json:"goroutine_fanout,omitempty"`
-	AdapterRoots              []string                        `yaml:"adapter_roots,omitempty" json:"adapter_roots,omitempty"`
-	Layers                    []DirectionPolicy               `yaml:"layers,omitempty" json:"layers,omitempty"`
-	Contexts                  []DirectionPolicy               `yaml:"contexts,omitempty" json:"contexts,omitempty"`
-	Generated                 GeneratedPolicy                 `yaml:"generated,omitempty" json:"generated,omitempty"`
-	Rules                     map[string]RulePolicy           `yaml:"rules,omitempty" json:"rules,omitempty"`
-	Exceptions                []PolicyException               `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`
+	// Version selects schema version 1; the zero configuration is invalid.
+	Version int `yaml:"version" json:"version"`
+	// Root is the absolute directory derived from the config path, not a YAML field.
+	Root string `yaml:"-" json:"root"`
+	// Packages declares import classification, boundaries and blocking API policies.
+	Packages []PackagePolicy `yaml:"packages,omitempty" json:"packages,omitempty"`
+	// Entrypoints lists exact packages exempt from root-context and process-control
+	// rules.
+	Entrypoints []string `yaml:"entrypoints,omitempty" json:"entrypoints,omitempty"`
+	// InitPackages lists exact packages permitted to declare init functions.
+	InitPackages []string `yaml:"init_packages,omitempty" json:"init_packages,omitempty"`
+	// ContextOwners lists exact packages permitted to store context implementations.
+	ContextOwners []string `yaml:"context_owners,omitempty" json:"context_owners,omitempty"`
+	// HTTPTimeoutExceptions lists exact packages exempt from HTTP timeout
+	// construction checks.
+	HTTPTimeoutExceptions []string `yaml:"http_timeout_exceptions,omitempty" json:"http_timeout_exceptions,omitempty"`
+	// Constructors identifies declarations checked for syntactically executed
+	// goroutine startup.
+	Constructors []ConstructorPolicy `yaml:"constructors,omitempty" json:"constructors,omitempty"`
+	// ResourceConstructors identifies call results that must not be discarded.
+	ResourceConstructors []ResourceConstructorPolicy `yaml:"resource_constructors,omitempty" json:"resource_constructors,omitempty"`
+	// Transactions identifies constructors requiring recognized immediate rollback
+	// ownership.
+	Transactions []TransactionPolicy `yaml:"transactions,omitempty" json:"transactions,omitempty"`
+	// LockSensitiveCalls selects resolved callback or IO calls forbidden under
+	// definitely-held locks.
+	LockSensitiveCalls []LockSensitiveCallPolicy `yaml:"lock_sensitive_calls,omitempty" json:"lock_sensitive_calls,omitempty"`
+	// SensitiveTypes identifies named secret-bearing types, not untyped secret
+	// values.
+	SensitiveTypes []SensitiveTypePolicy `yaml:"sensitive_types,omitempty" json:"sensitive_types,omitempty"`
+	// SensitiveSinks selects typed disclosure argument positions.
+	SensitiveSinks []SensitiveSinkPolicy `yaml:"sensitive_sinks,omitempty" json:"sensitive_sinks,omitempty"`
+	// ForbiddenAPIs declares callable migration policies and remediation text.
+	ForbiddenAPIs []ForbiddenAPIPolicy `yaml:"forbidden_apis,omitempty" json:"forbidden_apis,omitempty"`
+	// BackendClients restricts dependency trees to approved adapter packages.
+	BackendClients []BackendClientPolicy `yaml:"backend_clients,omitempty" json:"backend_clients,omitempty"`
+	// MutableGlobals selects package trees whose composite globals are governed.
+	MutableGlobals []MutableGlobalPolicy `yaml:"mutable_globals,omitempty" json:"mutable_globals,omitempty"`
+	// InterfaceProviderPackages selects provider trees forbidden to declare exported
+	// value interfaces.
+	InterfaceProviderPackages []string `yaml:"interface_provider_packages,omitempty" json:"interface_provider_packages,omitempty"`
+	// InterfaceNames selects exported value-interface name affixes and exemptions.
+	InterfaceNames []InterfaceNamePolicy `yaml:"interface_names,omitempty" json:"interface_names,omitempty"`
+	// MetricLabelTypes identifies named high-cardinality label-value types.
+	MetricLabelTypes []MetricLabelTypePolicy `yaml:"metric_label_types,omitempty" json:"metric_label_types,omitempty"`
+	// MetricLabelSinks selects metric call argument positions for label-value
+	// checks.
+	MetricLabelSinks []MetricLabelSinkPolicy `yaml:"metric_label_sinks,omitempty" json:"metric_label_sinks,omitempty"`
+	// MetricLabelNameTypes identifies named untrusted label-name types.
+	MetricLabelNameTypes []MetricLabelNameTypePolicy `yaml:"metric_label_name_types,omitempty" json:"metric_label_name_types,omitempty"`
+	// MetricLabelNameSinks selects metric call argument positions for label-name
+	// checks.
+	MetricLabelNameSinks []MetricLabelSinkPolicy `yaml:"metric_label_name_sinks,omitempty" json:"metric_label_name_sinks,omitempty"`
+	// BackendErrorBoundaries selects exported package error boundaries.
+	BackendErrorBoundaries []string `yaml:"backend_error_boundaries,omitempty" json:"backend_error_boundaries,omitempty"`
+	// BackendErrorSources identifies exact backend result positions for bounded SSA
+	// tracing.
+	BackendErrorSources []BackendErrorFlowPolicy `yaml:"backend_error_sources,omitempty" json:"backend_error_sources,omitempty"`
+	// BackendErrorPassthroughs declares explicitly trusted wrapper result-to-
+	// argument flow.
+	BackendErrorPassthroughs []BackendErrorPassthroughPolicy `yaml:"backend_error_passthroughs,omitempty" json:"backend_error_passthroughs,omitempty"`
+	// GoroutineFanout selects package trees and recognized static loop-launch
+	// ceilings.
+	GoroutineFanout []GoroutineFanoutPolicy `yaml:"goroutine_fanout,omitempty" json:"goroutine_fanout,omitempty"`
+	// AdapterRoots is reserved and must be nil; even an empty non-nil list is
+	// rejected.
+	AdapterRoots []string `yaml:"adapter_roots,omitempty" json:"adapter_roots,omitempty"`
+	// Layers declares named architectural import directions.
+	Layers []DirectionPolicy `yaml:"layers,omitempty" json:"layers,omitempty"`
+	// Contexts declares named bounded-context import directions.
+	Contexts []DirectionPolicy `yaml:"contexts,omitempty" json:"contexts,omitempty"`
+	// Generated authorizes exact header-bearing file exclusions at driver report
+	// collection.
+	Generated GeneratedPolicy `yaml:"generated,omitempty" json:"generated,omitempty"`
+	// Rules overrides known rule status/severity; nil retains metadata defaults.
+	Rules map[string]RulePolicy `yaml:"rules,omitempty" json:"rules,omitempty"`
+	// Exceptions declares attributable exact rule/package and optional file
+	// exceptions.
+	Exceptions []PolicyException `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`
 }
-    Config is the versioned organization policy consumed by analyzers.
+    Config is a mutable organization policy snapshot. Version 1 is required;
+    Validate checks shared structure, while analyzer constructors check typed
+    policies. Callers own nested maps/slices and must prevent concurrent
+    mutation.
 
 func LoadConfig(path string, knownRules []string) (*Config, error)
     LoadConfig reads exactly one strict YAML policy document.
 
-    Deprecated: use LoadConfigContext so cancellation can bound filesystem work.
+    Deprecated: use LoadConfigContext for cooperative filesystem cancellation.
 
 func LoadConfigContext(
 	ctx context.Context,
 	path string,
 	knownRules []string,
 ) (*Config, error)
-    LoadConfigContext reads exactly one strict YAML policy document. It observes
-    cancellation before and between filesystem operations and does not retain
-    ctx.
+    LoadConfigContext reads exactly one strict YAML policy document. It
+    observes cancellation before and around file reads and does not retain ctx.
+    A blocked os.Open/Read and buffered YAML decoding are not preempted.
+    The file is closed on return; up to 1 MiB of configuration is admitted.
+    ctx must be non-nil.
 
 func ParseConfigBytes(path string, contents []byte, knownRules []string) (*Config, error)
     ParseConfigBytes validates one bounded strict YAML policy snapshot. The path
     determines the root for repository-relative configuration and is not read.
+    Input above 1 MiB, unknown YAML fields, multiple documents or invalid shared
+    policy are rejected with nil configuration. YAML decoding can allocate
+    before semantic validation; this byte cap is not a total memory/CPU budget.
+    Contents and knownRules are borrowed only during the call; the decoded
+    records are new.
 
 func (config Config) Validate(knownRules []string) error
-    Validate checks a decoded configuration against the governed rule IDs.
+    Validate checks shared policy structure against governed IDs without
+    mutation. It does not authenticate promotion evidence, check file
+    existence/generated headers, or validate every analyzer-specific typed
+    policy. A nil knownRules list permits no explicit rule override or exception
+    IDs.
 
 type ConfigurationProperty struct {
-	Type        ConfigurationType `json:"type"`
-	Description string            `json:"description,omitempty"`
-	Required    bool              `json:"required,omitempty"`
+	// Type describes the primitive shape in metadata; Rule.Validate does not enforce
+	// it.
+	Type ConfigurationType `json:"type"`
+	// Description is optional explanatory text, not executable validation.
+	Description string `json:"description,omitempty"`
+	// Required documents requiredness; the generic metadata validator does not
+	// enforce it.
+	Required bool `json:"required,omitempty"`
 }
     ConfigurationProperty documents one accepted rule configuration key.
 
 type ConfigurationSchema struct {
+	// Properties maps option names to descriptive metadata; nil means no declared
+	// properties.
 	Properties map[string]ConfigurationProperty `json:"properties,omitempty"`
 }
     ConfigurationSchema documents the complete rule-specific configuration.
@@ -138,69 +258,110 @@ type ConfigurationType string
     ConfigurationType is a primitive accepted by a rule's configuration.
 
 const (
-	ConfigurationString  ConfigurationType = "string"
+	// ConfigurationString describes textual option metadata.
+	ConfigurationString ConfigurationType = "string"
+	// ConfigurationBoolean describes boolean option metadata.
 	ConfigurationBoolean ConfigurationType = "boolean"
+	// ConfigurationInteger describes integral option metadata.
 	ConfigurationInteger ConfigurationType = "integer"
-	ConfigurationArray   ConfigurationType = "array"
-	ConfigurationObject  ConfigurationType = "object"
+	// ConfigurationArray describes collection option metadata.
+	ConfigurationArray ConfigurationType = "array"
+	// ConfigurationObject describes keyed option metadata.
+	ConfigurationObject ConfigurationType = "object"
 )
 type ConstructorPolicy struct {
-	Package string   `yaml:"package" json:"package"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbols lists configured Function or Type.Method names.
 	Symbols []string `yaml:"symbols" json:"symbols"`
 }
     ConstructorPolicy identifies exact constructors with explicit lifecycle
     rules.
 
 type Diagnostic struct {
-	Rule        string `json:"rule"`
-	Package     string `json:"package,omitempty"`
-	Filename    string `json:"filename"`
-	Line        int    `json:"line"`
-	Column      int    `json:"column,omitempty"`
-	Message     string `json:"message"`
-	Rationale   string `json:"rationale,omitempty"`
+	// Rule identifies the reporting rule without implicitly validating that ID.
+	Rule string `json:"rule"`
+	// Package is the analyzed import path, when available.
+	Package string `json:"package,omitempty"`
+	// Filename is a source path; report writers reject traversal and relativize
+	// absolute paths against Root.
+	Filename string `json:"filename"`
+	// Line is a one-based source line; writers do not validate its range.
+	Line int `json:"line"`
+	// Column is a one-based source byte column; zero means unspecified.
+	Column int `json:"column,omitempty"`
+	// Message is emitted verbatim after JSON escaping; callers must omit secrets or
+	// source excerpts.
+	Message string `json:"message"`
+	// Rationale is optional policy context and is serialized by WriteJSON.
+	Rationale string `json:"rationale,omitempty"`
+	// Remediation is optional guidance and is serialized by WriteJSON.
 	Remediation string `json:"remediation,omitempty"`
 }
     Diagnostic is the stable reporting form of one policy violation.
 
 type DirectionPolicy struct {
-	Name      string   `yaml:"name" json:"name"`
+	// Name names the architectural partition used by package classifications.
+	Name string `yaml:"name" json:"name"`
+	// MayImport lists permitted different partitions; imports within the same name
+	// are allowed.
 	MayImport []string `yaml:"may_import,omitempty" json:"may_import,omitempty"`
 }
     DirectionPolicy names one architecture partition and permitted dependencies.
 
 type ForbiddenAPIPolicy struct {
-	Package         string   `yaml:"package" json:"package"`
-	Symbol          string   `yaml:"symbol" json:"symbol"`
-	Replacement     string   `yaml:"replacement" json:"replacement"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// Replacement is non-empty remediation text, not an automatically applied code
+	// fix.
+	Replacement string `yaml:"replacement" json:"replacement"`
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string `yaml:"allowed_packages,omitempty" json:"allowed_packages,omitempty"`
 }
     ForbiddenAPIPolicy configures one exact organization API migration.
 
 type GeneratedPolicy struct {
-	Exclude bool     `yaml:"exclude,omitempty" json:"exclude,omitempty"`
-	Paths   []string `yaml:"paths,omitempty" json:"paths,omitempty"`
+	// Exclude enables exclusions only for explicit Paths whose parsed AST has a
+	// generated header.
+	Exclude bool `yaml:"exclude,omitempty" json:"exclude,omitempty"`
+	// Paths lists at most 4096 exact repository-relative .go paths; no globs or
+	// traversal.
+	Paths []string `yaml:"paths,omitempty" json:"paths,omitempty"`
 }
     GeneratedPolicy controls exact trusted generated Go file exclusions.
 
 type GoroutineFanoutPolicy struct {
-	Package   string `yaml:"package" json:"package"`
-	MaxStatic int    `yaml:"max_static" json:"max_static"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// MaxStatic is the permitted statically expanded fan-out, from 1 through 1024;
+	// zero is invalid.
+	MaxStatic int `yaml:"max_static" json:"max_static"`
 }
     GoroutineFanoutPolicy configures a package tree's static fan-out ceiling.
 
 type InterfaceNamePolicy struct {
-	Package        string   `yaml:"package" json:"package"`
-	RequiredPrefix string   `yaml:"required_prefix,omitempty" json:"required_prefix,omitempty"`
-	RequiredSuffix string   `yaml:"required_suffix,omitempty" json:"required_suffix,omitempty"`
-	AllowedNames   []string `yaml:"allowed_names,omitempty" json:"allowed_names,omitempty"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// RequiredPrefix is the required case-sensitive name prefix; empty imposes none.
+	RequiredPrefix string `yaml:"required_prefix,omitempty" json:"required_prefix,omitempty"`
+	// RequiredSuffix is the required case-sensitive name suffix; empty imposes none.
+	RequiredSuffix string `yaml:"required_suffix,omitempty" json:"required_suffix,omitempty"`
+	// AllowedNames lists exact exported interface names exempt from affix checks.
+	AllowedNames []string `yaml:"allowed_names,omitempty" json:"allowed_names,omitempty"`
 }
     InterfaceNamePolicy governs exported value-interface names in one package
     tree.
 
 type LockSensitiveCallPolicy struct {
-	Package         string   `yaml:"package" json:"package"`
-	Symbol          string   `yaml:"symbol" json:"symbol"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string `yaml:"allowed_packages,omitempty" json:"allowed_packages,omitempty"`
 }
     LockSensitiveCallPolicy identifies a callback or I/O call forbidden under
@@ -211,104 +372,181 @@ type MetricLabelNameTypePolicy = MetricLabelTypePolicy
     label-name type.
 
 type MetricLabelSinkPolicy struct {
-	Package      string `yaml:"package" json:"package"`
-	Symbol       string `yaml:"symbol" json:"symbol"`
-	Arguments    []int  `yaml:"arguments,omitempty" json:"arguments,omitempty"`
-	VariadicFrom *int   `yaml:"variadic_from,omitempty" json:"variadic_from,omitempty"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// Arguments lists zero-based call-expression argument positions; method-
+	// expression receivers participate.
+	Arguments []int `yaml:"arguments,omitempty" json:"arguments,omitempty"`
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
+	VariadicFrom *int `yaml:"variadic_from,omitempty" json:"variadic_from,omitempty"`
 }
     MetricLabelSinkPolicy identifies label positions on one metric callable.
 
 type MetricLabelTypePolicy struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string `yaml:"package" json:"package"`
-	Name    string `yaml:"name" json:"name"`
+	// Name names the exact declared Go type, with aliases resolved during analysis.
+	Name string `yaml:"name" json:"name"`
 }
     MetricLabelTypePolicy identifies one named high-cardinality label type.
 
 type MutableGlobalPolicy struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string `yaml:"package" json:"package"`
 }
     MutableGlobalPolicy governs composite globals in one package tree.
 
 type PackagePolicy struct {
-	Pattern           string   `yaml:"pattern" json:"pattern"`
-	Layer             string   `yaml:"layer,omitempty" json:"layer,omitempty"`
-	Context           string   `yaml:"context,omitempty" json:"context,omitempty"`
-	AllowImports      []string `yaml:"allow_imports,omitempty" json:"allow_imports,omitempty"`
-	DenyImports       []string `yaml:"deny_imports,omitempty" json:"deny_imports,omitempty"`
+	// Pattern selects an exact import path or trailing /... package tree.
+	Pattern string `yaml:"pattern" json:"pattern"`
+	// Layer names a configured layer; empty leaves layer classification unset.
+	Layer string `yaml:"layer,omitempty" json:"layer,omitempty"`
+	// Context names a configured bounded context; empty leaves context
+	// classification unset.
+	Context string `yaml:"context,omitempty" json:"context,omitempty"`
+	// AllowImports lists exceptions to this policy's denied imports, not a general
+	// import allowlist.
+	AllowImports []string `yaml:"allow_imports,omitempty" json:"allow_imports,omitempty"`
+	// DenyImports lists forbidden exact imports or trailing /... trees.
+	DenyImports []string `yaml:"deny_imports,omitempty" json:"deny_imports,omitempty"`
+	// BlockingFunctions lists exported declarations requiring a context parameter.
 	BlockingFunctions []string `yaml:"blocking_functions,omitempty" json:"blocking_functions,omitempty"`
 }
     PackagePolicy assigns architecture constraints to matching import paths.
 
 type PolicyException struct {
-	Rule    string `yaml:"rule" json:"rule"`
+	// Rule is the exact known rule ID to filter.
+	Rule string `yaml:"rule" json:"rule"`
+	// Package is the exact clean import path, not a package pattern.
 	Package string `yaml:"package" json:"package"`
-	Path    string `yaml:"path,omitempty" json:"path,omitempty"`
-	Reason  string `yaml:"reason" json:"reason"`
+	// Path optionally narrows the exception to a clean repository-relative file.
+	Path string `yaml:"path,omitempty" json:"path,omitempty"`
+	// Reason is required explanatory text and is emitted in report inventories.
+	Reason string `yaml:"reason" json:"reason"`
+	// Expires is an optional YYYY-MM-DD UTC date, valid through that entire day.
 	Expires string `yaml:"expires,omitempty" json:"expires,omitempty"`
-	Issue   string `yaml:"issue,omitempty" json:"issue,omitempty"`
-	Used    bool   `yaml:"-" json:"used"`
+	// Issue is optional attribution text; no issue lookup is performed.
+	Issue string `yaml:"issue,omitempty" json:"issue,omitempty"`
+	// Used marks consumption; caller-supplied true is retained by
+	// ApplyPolicyExceptions.
+	Used bool `yaml:"-" json:"used"`
 }
     PolicyException is a narrow, reviewed exception to one rule.
 
 type PromotionPolicy struct {
-	Version  string `yaml:"version" json:"version"`
+	// Version is the required numeric major.minor.patch promotion version.
+	Version string `yaml:"version" json:"version"`
+	// Evidence is non-empty attribution text; no URL or artifact authentication is
+	// performed.
 	Evidence string `yaml:"evidence" json:"evidence"`
 }
-    PromotionPolicy proves that one blocking override is explicit and versioned.
+    PromotionPolicy attributes an explicit versioned blocking override;
+    its evidence is validated as non-empty text, not authenticated proof.
 
 type Report struct {
-	ToolVersion  string            `json:"tool_version"`
-	Root         string            `json:"-"`
-	Rules        []Rule            `json:"rules"`
-	Diagnostics  []Diagnostic      `json:"diagnostics"`
-	Exceptions   []PolicyException `json:"exceptions"`
-	Suppressions []Suppression     `json:"suppressions"`
+	// ToolVersion is caller-supplied provenance text, not inferred from a running
+	// binary.
+	ToolVersion string `json:"tool_version"`
+	// Root anchors absolute diagnostic/suppression paths and is not serialized.
+	Root string `json:"-"`
+	// Rules is the rule inventory; writers sort an outer copy by ID without
+	// validating metadata.
+	Rules []Rule `json:"rules"`
+	// Diagnostics contains retained findings; writers sort and normalize copied
+	// records.
+	Diagnostics []Diagnostic `json:"diagnostics"`
+	// Exceptions records policy exception attribution and use; writers do not
+	// normalize its Path field.
+	Exceptions []PolicyException `json:"exceptions"`
+	// Suppressions records inline directive attribution, normalized filenames and
+	// use.
+	Suppressions []Suppression `json:"suppressions"`
 }
     Report is the stable machine-readable result of one analysis run.
 
 type ResourceConstructorPolicy struct {
-	Package         string   `yaml:"package" json:"package"`
-	Symbol          string   `yaml:"symbol" json:"symbol"`
-	CleanupResult   int      `yaml:"cleanup_result" json:"cleanup_result"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// CleanupResult selects the zero-based cleanup result; binding it does not prove
+	// eventual cleanup.
+	CleanupResult int `yaml:"cleanup_result" json:"cleanup_result"`
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string `yaml:"allowed_packages,omitempty" json:"allowed_packages,omitempty"`
 }
     ResourceConstructorPolicy identifies an explicit cleanup ownership contract.
 
 type Rule struct {
-	ID                string              `json:"id"`
-	Category          Category            `json:"category"`
-	Severity          Severity            `json:"severity"`
-	DefaultStatus     Status              `json:"default_status"`
-	Rationale         string              `json:"rationale"`
-	Remediation       string              `json:"remediation"`
-	IntroducedVersion string              `json:"introduced_version"`
-	Configuration     ConfigurationSchema `json:"configuration"`
+	// ID is a stable category/kebab-case key used by policy and suppression
+	// matching.
+	ID string `json:"id"`
+	// Category is one of the supported engineering-policy families.
+	Category Category `json:"category"`
+	// Severity sets report prominence, independently of blocking status.
+	Severity Severity `json:"severity"`
+	// DefaultStatus sets default disabled/advisory/blocking enforcement.
+	DefaultStatus Status `json:"default_status"`
+	// Rationale is required human-readable policy motivation, emitted in reports.
+	Rationale string `json:"rationale"`
+	// Remediation is required guidance, not an automatically applied fix.
+	Remediation string `json:"remediation"`
+	// IntroducedVersion is the required numeric major.minor.patch introduction
+	// version.
+	IntroducedVersion string `json:"introduced_version"`
+	// Configuration describes options; Validate does not validate its properties.
+	Configuration ConfigurationSchema `json:"configuration"`
 }
     Rule contains stable, machine-readable metadata for one policy rule.
 
 func (rule Rule) Validate() error
-    Validate rejects incomplete or unstable rule metadata.
+    Validate rejects invalid ID/category/severity/status, blank rationale or
+    remediation, and a non-numeric semantic introduction version. It does not
+    validate Configuration properties or authenticate metadata provenance.
 
 type RulePolicy struct {
-	Status    Status           `yaml:"status,omitempty" json:"status,omitempty"`
-	Severity  Severity         `yaml:"severity,omitempty" json:"severity,omitempty"`
-	Options   map[string]any   `yaml:"options,omitempty" json:"options,omitempty"`
+	// Status overrides enforcement mode; empty retains the default, blocking
+	// requires Promotion.
+	Status Status `yaml:"status,omitempty" json:"status,omitempty"`
+	// Severity selects analyzer metadata severity; empty retains the default.
+	// The current driver report inventory retains built-in severities, so this
+	// override is not propagated to its JSON rule metadata or SARIF levels.
+	Severity Severity `yaml:"severity,omitempty" json:"severity,omitempty"`
+	// Options must be nil; use typed top-level policies instead of this unsupported
+	// map.
+	Options map[string]any `yaml:"options,omitempty" json:"options,omitempty"`
+	// Promotion is required exactly for an explicit blocking override; evidence is
+	// attribution, not executed proof.
 	Promotion *PromotionPolicy `yaml:"promotion,omitempty" json:"promotion,omitempty"`
 }
     RulePolicy overrides metadata defaults for one known rule.
 
 type SensitiveSinkPolicy struct {
-	Package         string   `yaml:"package" json:"package"`
-	Symbol          string   `yaml:"symbol" json:"symbol"`
-	Arguments       []int    `yaml:"arguments,omitempty" json:"arguments,omitempty"`
-	VariadicFrom    *int     `yaml:"variadic_from,omitempty" json:"variadic_from,omitempty"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// Arguments lists zero-based call-expression argument positions; method-
+	// expression receivers participate.
+	Arguments []int `yaml:"arguments,omitempty" json:"arguments,omitempty"`
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
+	VariadicFrom *int `yaml:"variadic_from,omitempty" json:"variadic_from,omitempty"`
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string `yaml:"allowed_packages,omitempty" json:"allowed_packages,omitempty"`
 }
     SensitiveSinkPolicy identifies typed-sensitive positions on one callable.
 
 type SensitiveTypePolicy struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string `yaml:"package" json:"package"`
-	Name    string `yaml:"name" json:"name"`
+	// Name names the exact declared Go type, with aliases resolved during analysis.
+	Name string `yaml:"name" json:"name"`
 }
     SensitiveTypePolicy identifies one named secret-bearing type.
 
@@ -316,29 +554,48 @@ type Severity string
     Severity determines how prominently a diagnostic is reported.
 
 const (
-	SeverityInfo    Severity = "info"
+	// SeverityInfo maps to a SARIF note.
+	SeverityInfo Severity = "info"
+	// SeverityWarning maps to a SARIF warning.
 	SeverityWarning Severity = "warning"
-	SeverityError   Severity = "error"
+	// SeverityError maps to a SARIF error; it does not itself make a finding blocking.
+	SeverityError Severity = "error"
 )
 type Status string
     Status controls whether a rule informs developers or blocks a build.
 
 const (
+	// StatusDisabled omits the rule from driver execution.
 	StatusDisabled Status = "disabled"
+	// StatusAdvisory retains findings without setting the driver blocking result.
 	StatusAdvisory Status = "advisory"
+	// StatusBlocking makes a remaining finding fail blocking policy.
 	StatusBlocking Status = "blocking"
 )
 type Suppression struct {
-	Rule          string    `json:"rule"`
-	Filename      string    `json:"filename"`
-	DirectiveLine int       `json:"directive_line"`
-	TargetLine    int       `json:"target_line"`
-	Reason        string    `json:"reason"`
-	Expires       time.Time `json:"expires,omitempty"`
-	Issue         string    `json:"issue,omitempty"`
-	Used          bool      `json:"used"`
+	// Rule is the exact known rule ID selected by the directive.
+	Rule string `json:"rule"`
+	// Filename is the file-set source filename, matched exactly before report
+	// normalization.
+	Filename string `json:"filename"`
+	// DirectiveLine is the one-based line containing the directive.
+	DirectiveLine int `json:"directive_line"`
+	// TargetLine is the line after the entire containing comment group, not
+	// necessarily after this directive.
+	TargetLine int `json:"target_line"`
+	// Reason is required attribution text and is emitted in reports.
+	Reason string `json:"reason"`
+	// Expires is an optional UTC expiry date, valid through that entire day; zero
+	// means no expiry.
+	Expires time.Time `json:"expires,omitempty"`
+	// Issue is optional attribution text; no issue lookup is performed.
+	Issue string `json:"issue,omitempty"`
+	// Used marks consumption; caller-supplied true is retained by ApplySuppressions.
+	Used bool `json:"used"`
 }
-    Suppression is one attributable exception attached to the following line.
+    Suppression attributes an inline exception to the line after its comment
+    group. Exported records are mutable; validation/use tracking does not
+    authenticate the reason, issue or source author.
 
 func ParseSuppressions(
 	fset *token.FileSet,
@@ -346,12 +603,23 @@ func ParseSuppressions(
 	knownRules []string,
 	now time.Time,
 ) ([]Suppression, error)
-    ParseSuppressions validates all analysis directives in a Go file.
+    ParseSuppressions reads exact //analysis:ignore directives from parsed
+    comments. Rules must be known; reason is required, metadata keys may not
+    repeat, and expires uses an inclusive UTC calendar date. TargetLine follows
+    group.End, including other comments in that group. Malformed or duplicate
+    target/rule directives return nil inventory and an error. file/fset must be
+    non-nil and consistent. The parser borrows them without mutation and has no
+    size limit.
 
 type TransactionPolicy struct {
-	Package        string `yaml:"package" json:"package"`
-	Symbol         string `yaml:"symbol" json:"symbol"`
-	Result         int    `yaml:"result" json:"result"`
+	// Package is the configured import path, not a filesystem path.
+	Package string `yaml:"package" json:"package"`
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string `yaml:"symbol" json:"symbol"`
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int `yaml:"result" json:"result"`
+	// RollbackMethod names the instance method that must establish rollback
+	// ownership.
 	RollbackMethod string `yaml:"rollback_method" json:"rollback_method"`
 }
     TransactionPolicy identifies one transaction constructor and its rollback
@@ -362,14 +630,37 @@ type TransactionPolicy struct {
 
 package analysistestkit // import "github.com/faustbrian/go-analysis/analysistestkit"
 
-Package analysistestkit provides shared analyzer robustness fixtures.
+Package analysistestkit owns internal test-only analyzer robustness, fixture
+precision and benchmark harnesses; it exports no execution API. The harness
+parses/types modeled source but does not execute modeled target statements.
+
+Generated headers in analyzer testdata and driver test source strings are
+intentional hand-maintained inputs to ast.IsGenerated and exclusion policy,
+not claims that production output needs an available source generator.
+Their exact header, build-tag, want and suppression semantics must remain
+intact. Fixture tests require diagnostics even in generated/tagged inputs;
+driver exclusions additionally require an exact trusted path. Semantic near-miss
+fixtures model aliases, closures, embedding, generics and interfaces without
+claiming a complete language or false-positive oracle. No regeneration or
+modeled go:generate execution is required or authorized by these headers.
 
 ## github.com/faustbrian/go-analysis/analyzers/backenderror
 
 package backenderror // import "github.com/faustbrian/go-analysis/analyzers/backenderror"
 
-Package backenderror prevents configured backend errors from crossing exported
-API boundaries without an explicit classification step.
+Package backenderror reports discovered configured backend error origins
+crossing exported API boundaries without an explicit classification step.
+
+Use New to trace configured error origins across exported functions and methods
+of exported types. Tracing follows selected intraprocedural SSA forms and
+explicit wrappers, visits at most 256 values per returned error, and silently
+stops beyond that bound. Unknown/dynamic callees are not an interprocedural
+ownership proof.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -405,30 +696,48 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates backend error policy and constructs an analyzer.
+    New validates backend error policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Flow struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
-	Symbol  string
-	Result  int
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int
 }
     Flow identifies one result from an exact backend callable.
 
 type Options struct {
-	Boundaries   []string
-	Sources      []Flow
+	// Boundaries lists non-overlapping exact packages or trailing /... trees with
+	// exported error boundaries.
+	Boundaries []string
+	// Sources identifies exact backend call results to trace; nil makes this check
+	// inactive.
+	Sources []Flow
+	// Passthroughs identifies explicitly trusted wrapper result/argument flow, not
+	// arbitrary callee bodies.
 	Passthroughs []Passthrough
 }
     Options configures exported boundary packages and backend error provenance.
 
 type Passthrough struct {
-	Package      string
-	Symbol       string
-	Result       int
-	Arguments    []int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int
+	// Arguments lists zero-based explicit parameter positions; the SSA method
+	// receiver is excluded, including method-expression calls.
+	Arguments []int
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
 	VariadicFrom *int
 }
     Passthrough identifies a callable result that preserves errors from exact
@@ -440,6 +749,15 @@ type Passthrough struct {
 package blockingcontext // import "github.com/faustbrian/go-analysis/analyzers/blockingcontext"
 
 Package blockingcontext requires context on configured blocking APIs.
+
+Use New to check configured exported declarations for a parameter matching or
+implementing context.Context. The presence of that parameter does not prove it
+is propagated or observed by the function body.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -467,18 +785,25 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates public symbol policy and constructs an analyzer.
+    New validates public symbol policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
     Options configures blocking public API contracts.
 
 type Policy struct {
-	Package   string
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Functions lists exported Function or Type.Method declarations requiring a
+	// context parameter.
 	Functions []string
 }
     Policy names exported blocking functions in one exact package.
@@ -490,6 +815,15 @@ package cleanupownership // import "github.com/faustbrian/go-analysis/analyzers/
 
 Package cleanupownership detects discarded cleanup results from configured
 constructors.
+
+Use New to reject blank or wholly ignored configured cleanup results. A named
+binding is accepted without proving invocation, deferral, transfer or eventual
+resource release.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -518,19 +852,29 @@ FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
     New validates cleanup ownership policy and constructs an analyzer.
+    Configuration collections are copied into the analyzer; pass syntax/type
+    data is borrowed for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Constructor struct {
-	Package         string
-	Symbol          string
-	CleanupResult   int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// CleanupResult selects the zero-based cleanup result; binding it does not prove
+	// eventual cleanup.
+	CleanupResult int
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Constructor identifies one exact callable and its cleanup result position.
 
 type Options struct {
+	// Constructors lists exact cleanup-producing callables; nil makes this check
+	// inactive.
 	Constructors []Constructor
 }
     Options configures cleanup ownership contracts.
@@ -541,6 +885,15 @@ type Options struct {
 package constructorgoroutine // import "github.com/faustbrian/go-analysis/analyzers/constructorgoroutine"
 
 Package constructorgoroutine forbids hidden goroutine startup in constructors.
+
+Use New to inspect configured declaration bodies and immediately invoked
+literals. Stored closures and called helper bodies are not expanded; this is
+syntactic startup policy, not goroutine lifetime proof.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -568,18 +921,24 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates constructor policy and constructs an analyzer.
+    New validates constructor policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
     Options configures constructor lifecycle policy.
 
 type Policy struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
+	// Symbols lists configured Function or Type.Method names.
 	Symbols []string
 }
     Policy names exact constructor functions and methods in one package.
@@ -590,6 +949,15 @@ type Policy struct {
 package forbiddenapi // import "github.com/faustbrian/go-analysis/analyzers/forbiddenapi"
 
 Package forbiddenapi enforces organization-specific API migrations.
+
+Use New to match resolved direct callable references in call expressions.
+It emits replacement guidance, not a SuggestedFix or a general function-value
+call-flow analysis.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -617,20 +985,30 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates migration policy and constructs an analyzer.
+    New validates migration policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
     Options configures organization-specific API migrations.
 
 type Policy struct {
-	Package         string
-	Symbol          string
-	Replacement     string
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Replacement is non-empty remediation text, not an automatically applied code
+	// fix.
+	Replacement string
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Policy identifies one exact callable and its approved replacement.
@@ -641,6 +1019,15 @@ type Policy struct {
 package globalgoroutine // import "github.com/faustbrian/go-analysis/analyzers/globalgoroutine"
 
 Package globalgoroutine detects goroutines started by package initialization.
+
+Use Analyzer for package variable initializers and immediately invoked literals.
+Stored closures, named helper bodies and init functions are not expanded;
+no target goroutine is started by this analyzer.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -670,6 +1057,16 @@ package goroutinefanout // import "github.com/faustbrian/go-analysis/analyzers/g
 Package goroutinefanout detects goroutine launches repeated by loops without a
 statically proven organization-approved bound.
 
+Use New for non-overlapping package patterns and ceilings from 1 through 1024.
+The check recognizes selected constant loop sizes, channel permit patterns and
+same-block WaitGroup synchronization. These syntactic exemptions do not prove
+runtime peak concurrency, termination or all-path cleanup.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
+
 VARIABLES
 
 var Analyzer, _ = New(Options{})
@@ -696,18 +1093,25 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates fan-out policy and constructs an analyzer.
+    New validates fan-out policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
     Options configures package fan-out limits.
 
 type Policy struct {
-	Package   string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// MaxStatic is the permitted statically expanded fan-out, from 1 through 1024;
+	// zero is invalid.
 	MaxStatic int
 }
     Policy opts one package or trailing /... tree into fan-out enforcement.
@@ -718,6 +1122,16 @@ type Policy struct {
 package httpclienttimeout // import "github.com/faustbrian/go-analysis/analyzers/httpclienttimeout"
 
 Package httpclienttimeout requires explicit timeout ownership for HTTP clients.
+
+Use New or Analyzer to inspect typed http.Client literals, new calls and
+uninitialized declarations. Missing or constant non-positive Timeout values are
+reported; non-constant expressions are accepted without proving positivity.
+Later assignments or effective transport/request deadlines are not modeled.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -745,12 +1159,16 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates timeout exceptions and constructs an analyzer.
+    New validates timeout exceptions and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Options configures reviewed packages that intentionally use unbounded
@@ -762,6 +1180,16 @@ type Options struct {
 package importboundary // import "github.com/faustbrian/go-analysis/analyzers/importboundary"
 
 Package importboundary enforces configured package dependency direction.
+
+Use New for direct import policies, restricted dependency trees and classified
+layer/context directions. Patterns are exact paths or trailing /... trees;
+same-partition imports are allowed. This inspects declared imports, not
+transitive runtime dependencies or injected object graphs.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -806,42 +1234,66 @@ FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
     New validates path semantics and constructs a configured analyzer.
+    Configuration collections are copied into the analyzer; pass syntax/type
+    data is borrowed for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Direction struct {
-	Name      string
+	// Name identifies the layer or bounded context referenced by PackageClass.
+	Name string
+	// MayImport lists permitted different partitions; imports within the same name
+	// are allowed.
 	MayImport []string
 }
     Direction names one layer or context and the other names it may import.
     Imports within the same name are always allowed.
 
 type Options struct {
-	Policies               []Policy
+	// Policies selects explicit denied-import policies; nil disables only this
+	// dimension, not restrictions or classified directions.
+	Policies []Policy
+	// RestrictedDependencies limits configured dependency trees to approved
+	// importing package trees.
 	RestrictedDependencies []RestrictedDependency
-	Packages               []PackageClass
-	Layers                 []Direction
-	Contexts               []Direction
+	// Packages assigns non-overlapping package trees to configured layers and
+	// contexts.
+	Packages []PackageClass
+	// Layers defines named architectural partitions and allowed cross-layer imports.
+	Layers []Direction
+	// Contexts defines named bounded contexts and allowed cross-context imports.
+	Contexts []Direction
 }
     Options configures all repository dependency boundaries.
 
 type PackageClass struct {
+	// Package selects an exact import path or trailing /... package tree.
 	Package string
-	Layer   string
+	// Layer names a configured layer; empty leaves layer classification unset.
+	Layer string
+	// Context names a configured bounded context; empty leaves context
+	// classification unset.
 	Context string
 }
     PackageClass assigns an exact package tree to a layer and bounded context.
 
 type Policy struct {
-	Package      string
-	DenyImports  []string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// DenyImports lists forbidden exact imports or trailing /... trees.
+	DenyImports []string
+	// AllowImports lists exceptions to this policy's denied imports, not a general
+	// import allowlist.
 	AllowImports []string
 }
     Policy defines imports denied for one package tree.
 
 type RestrictedDependency struct {
-	Package         string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// AllowedPackages lists approved exact import paths or trailing /... trees;
+	// at least one is required.
 	AllowedPackages []string
 }
     RestrictedDependency defines a package tree that only approved package trees
@@ -853,6 +1305,16 @@ type RestrictedDependency struct {
 package interfacenaming // import "github.com/faustbrian/go-analysis/analyzers/interfacenaming"
 
 Package interfacenaming enforces configured names for exported value interfaces.
+
+Use New to check exported value-interface declarations and aliases in selected
+package trees. Constraint-only interfaces are not value interfaces. Policies and
+compatibility names are each bounded to 1024 entries; prefix/suffix rules do not
+prove API design quality.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -880,21 +1342,29 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New constructs an independently configured analyzer.
+    New constructs an independently configured analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
     Options configures interface naming policies.
 
 type Policy struct {
-	Package        string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// RequiredPrefix is the required case-sensitive name prefix; empty imposes none.
 	RequiredPrefix string
+	// RequiredSuffix is the required case-sensitive name suffix; empty imposes none.
 	RequiredSuffix string
-	AllowedNames   []string
+	// AllowedNames lists exact exported interface names exempt from affix checks.
+	AllowedNames []string
 }
     Policy configures one non-overlapping package tree's interface names.
 
@@ -905,6 +1375,15 @@ package interfaceplacement // import "github.com/faustbrian/go-analysis/analyzer
 
 Package interfaceplacement enforces consumer-owned public interfaces in
 configured provider package trees.
+
+Use New for non-overlapping provider package patterns. Exported aliases and
+embedded value interfaces are included; constraint-only interfaces are excluded.
+Consumers are not discovered and moved automatically.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -933,11 +1412,15 @@ FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
     New validates provider package patterns and constructs an analyzer.
+    Configuration collections are copied into the analyzer; pass syntax/type
+    data is borrowed for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Packages lists non-overlapping provider package patterns; a trailing /...
+	// includes descendants.
 	Packages []string
 }
     Options configures provider package trees that must not own public value
@@ -949,6 +1432,17 @@ type Options struct {
 package lockacrosscall // import "github.com/faustbrian/go-analysis/analyzers/lockacrosscall"
 
 Package lockacrosscall detects configured calls made while locks are held.
+
+Use New for configured calls under definitely-held local sync.Mutex/RWMutex
+identities. CFG predecessor intersection does not report locks held on only
+some paths. The analysis errors above 4096 CFG blocks or 256 lock identities;
+aliases, interprocedural state, deferred calls and goroutine calls are not
+general lock-order proof.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -977,18 +1471,26 @@ FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
     New validates lock-sensitive call policy and constructs an analyzer.
+    Configuration collections are copied into the analyzer; pass syntax/type
+    data is borrowed for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Call struct {
-	Package         string
-	Symbol          string
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Call identifies one exact callback or I/O callable.
 
 type Options struct {
+	// Calls lists resolved calls forbidden under a definitely-held local lock; nil
+	// checks none.
 	Calls []Call
 }
     Options configures calls that must not run while a lock is held.
@@ -1000,6 +1502,16 @@ package metriccardinality // import "github.com/faustbrian/go-analysis/analyzers
 
 Package metriccardinality detects configured high-cardinality typed values
 passed to configured metric label positions.
+
+Use New or NewLabelName for declared type/call-position policies.
+Matching follows aliases, pointers and containers to configured named types,
+not arbitrary runtime cardinality or flow through already-erased values. Direct
+conversion syntax retains source-type evidence. No metric is emitted or sampled.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1057,7 +1569,9 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates typed metric policy and constructs an analyzer.
+    New validates typed metric policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 func NewLabelName(options LabelNameOptions) (*analysis.Analyzer, error)
     NewLabelName validates typed label-name policy and constructs an analyzer.
@@ -1070,29 +1584,45 @@ type AttackerControlledType = HighCardinalityType
     input that must not control metric label names.
 
 type HighCardinalityType struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
-	Name    string
+	// Name names the exact declared Go type, with aliases resolved during analysis.
+	Name string
 }
     HighCardinalityType identifies a named type that must not become a metric
     label without an explicit reviewed transformation.
 
 type LabelNameOptions struct {
+	// AttackerControlledTypes identifies named types governed as untrusted label
+	// names, not a general taint proof.
 	AttackerControlledTypes []AttackerControlledType
-	Sinks                   []Sink
+	// Sinks selects exact metric or disclosure calls and argument positions; nil
+	// checks none.
+	Sinks []Sink
 }
     LabelNameOptions configures attacker-controlled types and metric label-name
     sink positions.
 
 type Options struct {
+	// HighCardinalityTypes identifies named types carrying unbounded label values,
+	// not observed metric populations.
 	HighCardinalityTypes []HighCardinalityType
-	Sinks                []Sink
+	// Sinks selects exact metric or disclosure calls and argument positions; nil
+	// checks none.
+	Sinks []Sink
 }
     Options configures high-cardinality types and metric label sinks.
 
 type Sink struct {
-	Package      string
-	Symbol       string
-	Arguments    []int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Arguments lists zero-based call-expression argument positions; method-
+	// expression receivers participate.
+	Arguments []int
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
 	VariadicFrom *int
 }
     Sink identifies metric label argument positions on an exact callable.
@@ -1104,6 +1634,15 @@ package mutableglobal // import "github.com/faustbrian/go-analysis/analyzers/mut
 
 Package mutableglobal reports package variables that hold shared mutable state
 rather than immutable scalar values.
+
+Use New for selected package trees. Type shape, not actual mutation, governs
+composite package variables; scalar exemptions are not an immutability or
+race-freedom proof.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1132,16 +1671,21 @@ FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
     New validates policies and constructs an independently configured analyzer.
+    Configuration collections are copied into the analyzer; pass syntax/type
+    data is borrowed for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
     Options configures package trees governed by shared-state policy.
 
 type Policy struct {
+	// Package selects an exact import path or trailing /... package tree.
 	Package string
 }
     Policy selects one package tree for shared-state enforcement.
@@ -1152,6 +1696,15 @@ type Policy struct {
 package nobackground // import "github.com/faustbrian/go-analysis/analyzers/nobackground"
 
 Package nobackground restricts root context creation to composition roots.
+
+Use New or Analyzer for resolved context.Background, TODO and WithoutCancel
+calls. Exact approved packages and _test.go files are exempt. No context is
+created and no body-level propagation is proved.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1179,12 +1732,16 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) *analysis.Analyzer
-    New constructs an independently configured analyzer.
+    New constructs an independently configured analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Options configures packages that own root context creation.
@@ -1195,6 +1752,15 @@ type Options struct {
 package nodefaulthttp // import "github.com/faustbrian/go-analysis/analyzers/nodefaulthttp"
 
 Package nodefaulthttp forbids process-global HTTP clients and transports.
+
+Use Analyzer for resolved DefaultClient/DefaultTransport uses. Recognized
+DefaultTransport assertions directly cloned through Clone are allowed as owned
+construction; subsequent timeout and shutdown behavior is not proved.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1236,6 +1802,15 @@ package noinit // import "github.com/faustbrian/go-analysis/analyzers/noinit"
 
 Package noinit requires explicit construction instead of package init.
 
+Use New or Analyzer to report init declarations outside exact approved packages.
+Package variable initialization remains a separate concern; the analyzer does
+not execute initialization.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
+
 VARIABLES
 
 var Analyzer = New(Options{})
@@ -1262,12 +1837,16 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) *analysis.Analyzer
-    New constructs an independently configured analyzer.
+    New constructs an independently configured analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Options configures packages with a reviewed need for init.
@@ -1278,6 +1857,16 @@ type Options struct {
 package noprocesscontrol // import "github.com/faustbrian/go-analysis/analyzers/noprocesscontrol"
 
 Package noprocesscontrol restricts process termination to entrypoints.
+
+Use New or Analyzer for builtin panic and selected os.Exit/log.Fatal calls.
+Exact approved packages, .test packages and _test.go files are exempt.
+Function-value indirection and every possible process-termination API are not
+covered.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1305,12 +1894,16 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) *analysis.Analyzer
-    New constructs an independently configured analyzer.
+    New constructs an independently configured analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Options configures approved composition-root packages.
@@ -1321,6 +1914,16 @@ type Options struct {
 package nostoredcontext // import "github.com/faustbrian/go-analysis/analyzers/nostoredcontext"
 
 Package nostoredcontext forbids context lifecycle storage in structs.
+
+Use New or Analyzer to report struct fields implementing the directly imported
+context.Context interface. Embedded fields and aliases are type-checked, but
+absent direct context import disables this check; this is not a whole-program
+lifetime analysis.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1348,12 +1951,16 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) *analysis.Analyzer
-    New constructs an independently configured analyzer.
+    New constructs an independently configured analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Options configures reviewed lifecycle owner packages.
@@ -1364,6 +1971,15 @@ type Options struct {
 package nounsafe // import "github.com/faustbrian/go-analysis/analyzers/nounsafe"
 
 Package nounsafe forbids unsafe, cgo, and go:linkname in production policy.
+
+Use Analyzer for unsafe/C imports and go:linkname directives in supplied files.
+This inspects syntax, not every possible memory-safety bypass or cgo execution,
+and does not grant package exceptions itself.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1391,6 +2007,16 @@ var Rule = shared.Rule{
 package sensitivesink // import "github.com/faustbrian/go-analysis/analyzers/sensitivesink"
 
 Package sensitivesink detects typed sensitive values passed to configured sinks.
+
+Use New to compare selected call argument types against configured sensitive
+named types through pointers and containers. Conversion/type erasure, arbitrary
+struct contents and runtime string values are not general taint analysis;
+no redaction is performed.
+
+Analyzer descriptors and Rule metadata are exported mutable records. Configure
+before execution and do not mutate descriptors or shared metadata concurrently.
+Checks use supplied syntax/types; package loading and policy enforcement belong
+to the caller or driver, not this package.
 
 VARIABLES
 
@@ -1422,28 +2048,44 @@ var Rule = shared.Rule{
 FUNCTIONS
 
 func New(options Options) (*analysis.Analyzer, error)
-    New validates typed data policy and constructs an analyzer.
+    New validates typed data policy and constructs an analyzer. Configuration
+    collections are copied into the analyzer; pass syntax/type data is borrowed
+    for each run. No caller collection is mutated.
 
 
 TYPES
 
 type Options struct {
+	// SensitiveTypes identifies named secret-bearing types; values erased to other
+	// types need separate analysis.
 	SensitiveTypes []SensitiveType
-	Sinks          []Sink
+	// Sinks selects exact metric or disclosure calls and argument positions; nil
+	// checks none.
+	Sinks []Sink
 }
     Options configures sensitive types and output sinks.
 
 type SensitiveType struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
-	Name    string
+	// Name names the exact declared Go type, with aliases resolved during analysis.
+	Name string
 }
     SensitiveType identifies one named type carrying secret-bearing data.
 
 type Sink struct {
-	Package         string
-	Symbol          string
-	Arguments       []int
-	VariadicFrom    *int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Arguments lists zero-based call-expression argument positions; method-
+	// expression receivers participate.
+	Arguments []int
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
+	VariadicFrom *int
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
     Sink identifies sensitive argument positions on one exact callable.
@@ -1455,6 +2097,13 @@ package transactionrollback // import "github.com/faustbrian/go-analysis/analyze
 
 Package transactionrollback enforces immediate rollback ownership for configured
 transaction constructors.
+
+Use New to recognize configured assignment, optional terminating error guard,
+then immediate deferred rollback or ownership return. Only those local syntax
+shapes establish the policy; this does not prove rollback execution, success,
+transaction isolation or cleanup through arbitrary wrappers. The analyzer owns
+no transaction and runs no target code. Returned descriptors and exported Rule
+metadata must not be mutated concurrently with execution.
 
 VARIABLES
 
@@ -1488,14 +2137,20 @@ func New(options Options) (*analysis.Analyzer, error)
 TYPES
 
 type Options struct {
+	// Transactions lists exact rollback contracts; nil makes this check inactive.
 	Transactions []Transaction
 }
     Options configures transaction rollback ownership contracts.
 
 type Transaction struct {
-	Package        string
-	Symbol         string
-	Result         int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int
+	// RollbackMethod names the instance method that must establish rollback
+	// ownership.
 	RollbackMethod string
 }
     Transaction identifies one transaction constructor and its rollback
@@ -1506,38 +2161,68 @@ type Transaction struct {
 
 package policy // import "github.com/faustbrian/go-analysis/policy"
 
-Package policy owns rule governance and deterministic inventories.
+Package policy owns validated rule governance and lexical inventories.
+Builtin selects the shipped rules; NewRegistry accepts explicit metadata without
+executing analyzers or authenticating owner/promotion/overlap claims.
+
+Construction borrows nested rule Properties maps and Overlaps slices. Treat
+those caller-owned values as immutable while using a registry, including across
+goroutines. Entries returns copies of those collections, not a live view.
 
 TYPES
 
 type Entry struct {
-	Rule              shared.Rule `json:"rule"`
-	Owner             string      `json:"owner"`
-	PromotionEvidence string      `json:"promotion_evidence,omitempty"`
-	Overlaps          []Overlap   `json:"overlaps,omitempty"`
+	// Rule contains governed metadata; nested Properties storage is borrowed at
+	// construction.
+	Rule shared.Rule `json:"rule"`
+	// Owner is required attribution text, not an authenticated principal.
+	Owner string `json:"owner"`
+	// PromotionEvidence is required for blocking defaults, but no linked artifact is
+	// fetched or verified.
+	PromotionEvidence string `json:"promotion_evidence,omitempty"`
+	// Overlaps records adjacent tool authority; its backing slice is borrowed at
+	// construction.
+	Overlaps []Overlap `json:"overlaps,omitempty"`
 }
     Entry associates a rule with ownership and promotion evidence.
 
 type Overlap struct {
-	Tool               string `json:"tool"`
+	// Tool names the adjacent authority; trimmed case-insensitive duplicates are
+	// rejected.
+	Tool string `json:"tool"`
+	// CanonicalAuthority is required explanatory authority text, not executable tool
+	// delegation.
 	CanonicalAuthority string `json:"canonical_authority"`
-	CompatibleConfig   string `json:"compatible_configuration,omitempty"`
+	// CompatibleConfig is optional configuration guidance, not validated against the
+	// named tool.
+	CompatibleConfig string `json:"compatible_configuration,omitempty"`
 }
     Overlap documents another tool covering adjacent or identical semantics.
 
 type Registry struct {
 	// Has unexported fields.
 }
-    Registry is an immutable, validated rule inventory.
+    Registry is a validated inventory with no mutation methods. NewRegistry
+    retains nested input storage, so immutability/concurrent read safety
+    requires callers not to mutate the borrowed maps or slices. A zero Registry
+    reads empty; nil receiver calls are not supported.
 
 func Builtin() (*Registry, error)
-    Builtin returns the governed inventory shipped by this module.
+    Builtin validates the shipped advisory rule inventory on each call. Exported
+    analyzer Rule records supply its metadata and nested maps remain borrowed;
+    callers must not mutate that shared metadata concurrently. No analyzer runs.
 
 func NewRegistry(entries []Entry) (*Registry, error)
-    NewRegistry rejects incomplete ownership and silent blocking promotion.
+    NewRegistry rejects invalid shared rule metadata, blank owners, blocking
+    defaults without promotion text, duplicate IDs and duplicate overlap tools.
+    It returns nil on error and does not mutate inputs, but retains each
+    entry by value with borrowed nested maps/slices. Evidence strings are not
+    verified. Empty input produces an empty registry.
 
 func (registry *Registry) Entries() []Entry
-    Entries returns governed rules in stable order without exposing storage.
+    Entries returns ID-sorted entry copies, including fresh Overlaps slices and
+    Configuration.Properties maps. Callers may mutate those returned collections
+    independently; other record fields are scalar values.
 
 func (registry *Registry) IDs() []string
     IDs returns rule IDs in stable lexical order.

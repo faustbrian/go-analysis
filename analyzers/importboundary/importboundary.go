@@ -1,4 +1,14 @@
 // Package importboundary enforces configured package dependency direction.
+//
+// Use New for direct import policies, restricted dependency trees and classified
+// layer/context directions. Patterns are exact paths or trailing /... trees;
+// same-partition imports are allowed. This inspects declared imports, not
+// transitive runtime dependencies or injected object graphs.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package importboundary
 
 import (
@@ -18,39 +28,61 @@ const ruleID = "architecture/import-boundary"
 
 // Policy defines imports denied for one package tree.
 type Policy struct {
-	Package      string
-	DenyImports  []string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// DenyImports lists forbidden exact imports or trailing /... trees.
+	DenyImports []string
+	// AllowImports lists exceptions to this policy's denied imports, not a general
+	// import allowlist.
 	AllowImports []string
 }
 
 // RestrictedDependency defines a package tree that only approved package
 // trees may import. It models backend clients and other adapter-owned APIs.
 type RestrictedDependency struct {
-	Package         string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// AllowedPackages lists approved exact import paths or trailing /... trees;
+	// at least one is required.
 	AllowedPackages []string
 }
 
 // PackageClass assigns an exact package tree to a layer and bounded context.
 type PackageClass struct {
+	// Package selects an exact import path or trailing /... package tree.
 	Package string
-	Layer   string
+	// Layer names a configured layer; empty leaves layer classification unset.
+	Layer string
+	// Context names a configured bounded context; empty leaves context
+	// classification unset.
 	Context string
 }
 
 // Direction names one layer or context and the other names it may import.
 // Imports within the same name are always allowed.
 type Direction struct {
-	Name      string
+	// Name identifies the layer or bounded context referenced by PackageClass.
+	Name string
+	// MayImport lists permitted different partitions; imports within the same name
+	// are allowed.
 	MayImport []string
 }
 
 // Options configures all repository dependency boundaries.
 type Options struct {
-	Policies               []Policy
+	// Policies selects explicit denied-import policies; nil disables only this
+	// dimension, not restrictions or classified directions.
+	Policies []Policy
+	// RestrictedDependencies limits configured dependency trees to approved
+	// importing package trees.
 	RestrictedDependencies []RestrictedDependency
-	Packages               []PackageClass
-	Layers                 []Direction
-	Contexts               []Direction
+	// Packages assigns non-overlapping package trees to configured layers and
+	// contexts.
+	Packages []PackageClass
+	// Layers defines named architectural partitions and allowed cross-layer imports.
+	Layers []Direction
+	// Contexts defines named bounded contexts and allowed cross-context imports.
+	Contexts []Direction
 }
 
 type packagePattern struct {
@@ -112,6 +144,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates path semantics and constructs a configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	policies := make([]compiledPolicy, 0, len(options.Policies))
 	for _, policy := range options.Policies {

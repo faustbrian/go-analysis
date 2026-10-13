@@ -7,8 +7,12 @@ import (
 	"time"
 )
 
-// ApplyPolicyExceptions filters exact reviewed exceptions and rejects stale
-// or expired configuration.
+// ApplyPolicyExceptions filters exact rule/package and optional normalized file
+// matches. Expiry is inclusive through its UTC date; attribution and prior Used
+// flags are not authenticated or reset. Use freshly validated configuration.
+// First matching entry wins; unused entries fail with nil findings and an updated
+// copied inventory. Errors can also return that inventory. Inputs are not mutated;
+// with no exceptions the original diagnostics slice is returned unchanged.
 func ApplyPolicyExceptions(
 	root string,
 	diagnostics []Diagnostic,

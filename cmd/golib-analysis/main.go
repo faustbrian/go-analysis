@@ -1,4 +1,11 @@
-// Command analysis runs the governed analyzer suite as a standalone vettool.
+// Command analysis provides configured check/reporting, policy validation and
+// synchronization, inventory/version utilities, and raw multichecker fallback.
+// Configured check separates advisory findings from blocking exit status; raw
+// vettool mode has no YAML channel and uses Go vet diagnostic exit semantics.
+// Output streams are borrowed; errors may leave partial report output. The
+// command is not a sandbox or arbitrary-text redactor and package loading uses
+// the invoking environment. main supplies a background context, not a signal
+// cancellation controller. See docs/reference.md for command contracts.
 package main
 
 import (
@@ -352,6 +359,8 @@ func runPolicySyncWithDependenciesContext(
 	if len(canonical) > maxPolicySyncBytes {
 		return true, fmt.Errorf("canonical policy exceeds %d bytes", maxPolicySyncBytes)
 	}
+	// Validate the bytes about to be copied, not only the earlier path read:
+	// canonical contents may have changed between those filesystem operations.
 	snapshot, err := shared.ParseConfigBytes(arguments[2], canonical, registry.IDs())
 	if err != nil {
 		return true, fmt.Errorf("validate canonical policy snapshot: %w", err)

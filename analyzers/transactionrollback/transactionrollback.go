@@ -1,5 +1,12 @@
 // Package transactionrollback enforces immediate rollback ownership for
 // configured transaction constructors.
+//
+// Use New to recognize configured assignment, optional terminating error guard,
+// then immediate deferred rollback or ownership return. Only those local syntax
+// shapes establish the policy; this does not prove rollback execution, success,
+// transaction isolation or cleanup through arbitrary wrappers. The analyzer owns
+// no transaction and runs no target code. Returned descriptors and exported Rule
+// metadata must not be mutated concurrently with execution.
 package transactionrollback
 
 import (
@@ -19,14 +26,20 @@ const ruleID = "lifecycle/transaction-rollback"
 // Transaction identifies one transaction constructor and its rollback
 // contract.
 type Transaction struct {
-	Package        string
-	Symbol         string
-	Result         int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Result selects the zero-based result position; zero selects the first result.
+	Result int
+	// RollbackMethod names the instance method that must establish rollback
+	// ownership.
 	RollbackMethod string
 }
 
 // Options configures transaction rollback ownership contracts.
 type Options struct {
+	// Transactions lists exact rollback contracts; nil makes this check inactive.
 	Transactions []Transaction
 }
 

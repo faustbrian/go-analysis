@@ -1,4 +1,15 @@
 // Package lockacrosscall detects configured calls made while locks are held.
+//
+// Use New for configured calls under definitely-held local sync.Mutex/RWMutex
+// identities. CFG predecessor intersection does not report locks held on only
+// some paths. The analysis errors above 4096 CFG blocks or 256 lock identities;
+// aliases, interprocedural state, deferred calls and goroutine calls are not
+// general lock-order proof.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package lockacrosscall
 
 import (
@@ -24,13 +35,19 @@ const (
 
 // Call identifies one exact callback or I/O callable.
 type Call struct {
-	Package         string
-	Symbol          string
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
 // Options configures calls that must not run while a lock is held.
 type Options struct {
+	// Calls lists resolved calls forbidden under a definitely-held local lock; nil
+	// checks none.
 	Calls []Call
 }
 
@@ -79,6 +96,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates lock-sensitive call policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	calls := make(map[symbolKey]compiledCall, len(options.Calls))
 	for _, call := range options.Calls {
@@ -386,6 +405,8 @@ func lockIdentity(pass *analysis.Pass, expression ast.Expr) (lockKey, bool) {
 	}
 }
 
+// intersectPredecessors retains only definitely-held identities. Union would
+// report may-held branches as certain and change this rule's precision contract.
 func intersectPredecessors(
 	predecessors []*cfg.Block,
 	outputs []lockSet,

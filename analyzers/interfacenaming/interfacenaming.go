@@ -1,4 +1,14 @@
 // Package interfacenaming enforces configured names for exported value interfaces.
+//
+// Use New to check exported value-interface declarations and aliases in selected
+// package trees. Constraint-only interfaces are not value interfaces. Policies
+// and compatibility names are each bounded to 1024 entries; prefix/suffix rules
+// do not prove API design quality.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package interfacenaming
 
 import (
@@ -21,14 +31,20 @@ const (
 
 // Policy configures one non-overlapping package tree's interface names.
 type Policy struct {
-	Package        string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// RequiredPrefix is the required case-sensitive name prefix; empty imposes none.
 	RequiredPrefix string
+	// RequiredSuffix is the required case-sensitive name suffix; empty imposes none.
 	RequiredSuffix string
-	AllowedNames   []string
+	// AllowedNames lists exact exported interface names exempt from affix checks.
+	AllowedNames []string
 }
 
 // Options configures interface naming policies.
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
 
@@ -61,6 +77,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New constructs an independently configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	if len(options.Policies) > maxPolicies {
 		return nil, errors.New("interface naming policy exceeds 1024 package entries")

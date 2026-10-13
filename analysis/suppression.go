@@ -11,19 +11,37 @@ import (
 
 const suppressionPrefix = "//analysis:ignore "
 
-// Suppression is one attributable exception attached to the following line.
+// Suppression attributes an inline exception to the line after its comment group.
+// Exported records are mutable; validation/use tracking does not authenticate
+// the reason, issue or source author.
 type Suppression struct {
-	Rule          string    `json:"rule"`
-	Filename      string    `json:"filename"`
-	DirectiveLine int       `json:"directive_line"`
-	TargetLine    int       `json:"target_line"`
-	Reason        string    `json:"reason"`
-	Expires       time.Time `json:"expires,omitempty"`
-	Issue         string    `json:"issue,omitempty"`
-	Used          bool      `json:"used"`
+	// Rule is the exact known rule ID selected by the directive.
+	Rule string `json:"rule"`
+	// Filename is the file-set source filename, matched exactly before report
+	// normalization.
+	Filename string `json:"filename"`
+	// DirectiveLine is the one-based line containing the directive.
+	DirectiveLine int `json:"directive_line"`
+	// TargetLine is the line after the entire containing comment group, not
+	// necessarily after this directive.
+	TargetLine int `json:"target_line"`
+	// Reason is required attribution text and is emitted in reports.
+	Reason string `json:"reason"`
+	// Expires is an optional UTC expiry date, valid through that entire day; zero
+	// means no expiry.
+	Expires time.Time `json:"expires,omitempty"`
+	// Issue is optional attribution text; no issue lookup is performed.
+	Issue string `json:"issue,omitempty"`
+	// Used marks consumption; caller-supplied true is retained by ApplySuppressions.
+	Used bool `json:"used"`
 }
 
-// ParseSuppressions validates all analysis directives in a Go file.
+// ParseSuppressions reads exact //analysis:ignore directives from parsed comments.
+// Rules must be known; reason is required, metadata keys may not repeat, and
+// expires uses an inclusive UTC calendar date. TargetLine follows group.End,
+// including other comments in that group. Malformed or duplicate target/rule
+// directives return nil inventory and an error. file/fset must be non-nil and
+// consistent. The parser borrows them without mutation and has no size limit.
 func ParseSuppressions(
 	fset *token.FileSet,
 	file *ast.File,
@@ -128,7 +146,11 @@ func midnightUTC(value time.Time) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
 
-// ApplySuppressions filters exact matches and rejects unused directives.
+// ApplySuppressions filters exact rule/filename/target-line matches and updates
+// a copied inventory. It does not revalidate directive syntax, expiry or prior
+// Used flags; normally pass a freshly parsed inventory. Duplicate inputs use the
+// first match. An unused entry returns nil findings, the updated inventory and
+// an error. Inputs are not mutated; retained findings use a new outer slice.
 func ApplySuppressions(
 	diagnostics []Diagnostic,
 	suppressions []Suppression,

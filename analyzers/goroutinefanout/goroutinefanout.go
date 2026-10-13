@@ -1,5 +1,15 @@
 // Package goroutinefanout detects goroutine launches repeated by loops without
 // a statically proven organization-approved bound.
+//
+// Use New for non-overlapping package patterns and ceilings from 1 through 1024.
+// The check recognizes selected constant loop sizes, channel permit patterns and
+// same-block WaitGroup synchronization. These syntactic exemptions do not prove
+// runtime peak concurrency, termination or all-path cleanup.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package goroutinefanout
 
 import (
@@ -23,12 +33,17 @@ const (
 
 // Policy opts one package or trailing /... tree into fan-out enforcement.
 type Policy struct {
-	Package   string
+	// Package selects an exact import path or trailing /... package tree.
+	Package string
+	// MaxStatic is the permitted statically expanded fan-out, from 1 through 1024;
+	// zero is invalid.
 	MaxStatic int
 }
 
 // Options configures package fan-out limits.
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
 
@@ -73,6 +88,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates fan-out policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	policies := make([]compiledPolicy, 0, len(options.Policies))
 	for _, policy := range options.Policies {
@@ -448,6 +465,8 @@ func recordChannelCapacity(
 	if !isChannel(pass.TypesInfo.TypeOf(left)) {
 		return
 	}
+	// Any second assignment invalidates the one-construction capacity evidence,
+	// even if it spells another constant make. This is not alias analysis.
 	if _, duplicate := seen[identity]; duplicate {
 		delete(capacities, identity)
 		return

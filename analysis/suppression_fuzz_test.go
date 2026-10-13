@@ -9,6 +9,9 @@ import (
 	shared "github.com/faustbrian/go-analysis/analysis"
 )
 
+// FuzzParseSuppressions inserts a bounded directive into parsed source at a
+// fixed UTC date. Invalid Go is discarded; accepted directives need not succeed.
+// The invariant is parser robustness, not authorization or suppression use.
 func FuzzParseSuppressions(f *testing.F) {
 	f.Add("security/no-unsafe -- reviewed bridge; issue=SEC-1")
 	f.Add("security/no-unsafe -- temporary; expires=2027-01-31")

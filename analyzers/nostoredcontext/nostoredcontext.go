@@ -1,4 +1,14 @@
 // Package nostoredcontext forbids context lifecycle storage in structs.
+//
+// Use New or Analyzer to report struct fields implementing the directly imported
+// context.Context interface. Embedded fields and aliases are type-checked, but
+// absent direct context import disables this check; this is not a whole-program
+// lifetime analysis.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package nostoredcontext
 
 import (
@@ -13,6 +23,8 @@ const ruleID = "context/no-stored-context"
 
 // Options configures reviewed lifecycle owner packages.
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
@@ -37,6 +49,8 @@ var Rule = shared.Rule{
 var Analyzer = New(Options{})
 
 // New constructs an independently configured analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) *analysis.Analyzer {
 	allowed := make(map[string]struct{}, len(options.AllowedPackages))
 	for _, packagePath := range options.AllowedPackages {

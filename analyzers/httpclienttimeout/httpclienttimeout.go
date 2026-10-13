@@ -1,4 +1,15 @@
 // Package httpclienttimeout requires explicit timeout ownership for HTTP clients.
+//
+// Use New or Analyzer to inspect typed http.Client literals, new calls and
+// uninitialized declarations. Missing or constant non-positive Timeout values
+// are reported; non-constant expressions are accepted without proving
+// positivity. Later assignments or effective transport/request deadlines are not
+// modeled.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package httpclienttimeout
 
 import (
@@ -17,6 +28,8 @@ const ruleID = "http/client-timeout"
 
 // Options configures reviewed packages that intentionally use unbounded clients.
 type Options struct {
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
@@ -41,6 +54,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates timeout exceptions and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	allowed := make(map[string]struct{}, len(options.AllowedPackages))
 	for _, packagePath := range options.AllowedPackages {

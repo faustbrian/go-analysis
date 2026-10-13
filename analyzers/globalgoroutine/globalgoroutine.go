@@ -1,4 +1,13 @@
 // Package globalgoroutine detects goroutines started by package initialization.
+//
+// Use Analyzer for package variable initializers and immediately invoked
+// literals. Stored closures, named helper bodies and init functions are not
+// expanded; no target goroutine is started by this analyzer.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package globalgoroutine
 
 import (

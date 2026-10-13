@@ -6,6 +6,13 @@ semantic versioning; compatibility decisions are described in
 
 ## Unreleased
 
+### Documentation
+
+- Clarify analyzer proof scope, borrowed registry metadata, cooperative
+  cancellation, report disclosure and suppression association. Document the
+  existing driver severity-override propagation limitation and refresh the
+  native public documentation snapshot without changing runtime behavior.
+
 ## 1.2.2 - 2026-10-07
 
 ### Changed

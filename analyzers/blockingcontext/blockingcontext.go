@@ -1,4 +1,13 @@
 // Package blockingcontext requires context on configured blocking APIs.
+//
+// Use New to check configured exported declarations for a parameter matching or
+// implementing context.Context. The presence of that parameter does not prove it
+// is propagated or observed by the function body.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package blockingcontext
 
 import (
@@ -16,12 +25,17 @@ const ruleID = "context/blocking-api-context"
 
 // Policy names exported blocking functions in one exact package.
 type Policy struct {
-	Package   string
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Functions lists exported Function or Type.Method declarations requiring a
+	// context parameter.
 	Functions []string
 }
 
 // Options configures blocking public API contracts.
 type Options struct {
+	// Policies selects the governed packages or callables; nil leaves configured-
+	// only checks inactive.
 	Policies []Policy
 }
 
@@ -46,6 +60,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates public symbol policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	configured := make(map[string]map[string]struct{}, len(options.Policies))
 	for _, policy := range options.Policies {

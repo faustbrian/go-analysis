@@ -12,15 +12,32 @@ import (
 
 // Report is the stable machine-readable result of one analysis run.
 type Report struct {
-	ToolVersion  string            `json:"tool_version"`
-	Root         string            `json:"-"`
-	Rules        []Rule            `json:"rules"`
-	Diagnostics  []Diagnostic      `json:"diagnostics"`
-	Exceptions   []PolicyException `json:"exceptions"`
-	Suppressions []Suppression     `json:"suppressions"`
+	// ToolVersion is caller-supplied provenance text, not inferred from a running
+	// binary.
+	ToolVersion string `json:"tool_version"`
+	// Root anchors absolute diagnostic/suppression paths and is not serialized.
+	Root string `json:"-"`
+	// Rules is the rule inventory; writers sort an outer copy by ID without
+	// validating metadata.
+	Rules []Rule `json:"rules"`
+	// Diagnostics contains retained findings; writers sort and normalize copied
+	// records.
+	Diagnostics []Diagnostic `json:"diagnostics"`
+	// Exceptions records policy exception attribution and use; writers do not
+	// normalize its Path field.
+	Exceptions []PolicyException `json:"exceptions"`
+	// Suppressions records inline directive attribution, normalized filenames and
+	// use.
+	Suppressions []Suppression `json:"suppressions"`
 }
 
-// WriteJSON emits a deterministic report without source contents.
+// WriteJSON emits a newline-terminated report with sorted outer inventories and
+// normalized diagnostic/suppression paths. It omits source/snippet fields, but
+// caller messages, attribution, metadata and exception Path remain unsanitized.
+// Validation precedes writing; writer errors may leave partial output. The writer
+// is borrowed, must be non-nil, and is never flushed or closed. Nested rule maps
+// remain shared with the input; do not mutate them during serialization. No byte
+// or entry limit is enforced here.
 func WriteJSON(writer io.Writer, report Report) error {
 	normalized, err := normalizeReport(report)
 	if err != nil {
@@ -35,7 +52,11 @@ func WriteJSON(writer io.Writer, report Report) error {
 	return nil
 }
 
-// WriteSARIF emits a deterministic SARIF 2.1.0 document without snippets.
+// WriteSARIF emits newline-terminated SARIF 2.1.0 with sorted inventories,
+// relative diagnostic/suppression paths and no source/snippet fields. It shares
+// WriteJSON's borrowed-writer, partial-output, mutation and arbitrary-text limits.
+// Unknown diagnostic rule IDs receive warning level rather than being rejected;
+// metadata and SARIF schema conformance are not validated by this writer.
 func WriteSARIF(writer io.Writer, report Report) error {
 	normalized, err := normalizeReport(report)
 	if err != nil {

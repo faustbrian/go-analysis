@@ -49,19 +49,23 @@ exit status: any emitted diagnostic fails the invocation. Use configured
 
 JSON contains `tool_version`, sorted rule metadata, diagnostics, reviewed policy
 exceptions, and parsed suppressions. A diagnostic contains its stable rule ID,
-severity, status, repository-relative filename, one-based line and column, and
-message. Reports never include source snippets.
+repository-relative filename, one-based line and column, message, rationale and
+remediation. Severity/default status live in the rule inventory, not each finding.
+Reports omit source/snippet fields, but arbitrary message, metadata and attribution
+text is not redacted. Direct writer callers own valid positions and report sizes.
 
 One run accepts at most 100,000 diagnostics and 100,000 source suppressions.
 Diagnostic emission is stopped at the limit before checker accumulation;
-report collection independently rechecks the same bound. Exceeding either
+checker work itself continues. The ceiling counts findings before generated
+exclusions and suppressions, not only retained findings.
+Report collection independently rechecks the same bound. Exceeding either
 limit fails analysis instead of allocating an unbounded report. SSA backend
 error traces stop after 256 values, goroutine proofs stop after 1,024 static
 iterations, and lock must-analysis rejects functions above 4,096 CFG blocks or
 256 lock identities.
 
 SARIF output is version 2.1.0. Rule rationale and remediation populate the tool
-driver descriptors; diagnostic severity maps to SARIF level; exceptions and
+driver descriptors; rule-inventory severity maps to SARIF level; exceptions and
 suppressions remain run properties for audit. Artifact URIs are
 repository-relative and use forward slashes. Paths that escape the report root
 are rejected rather than exposed.
@@ -79,6 +83,15 @@ For CI, write SARIF to a file and let the CI platform upload it:
 The project does not upload reports itself and does not require repository or
 cloud credentials.
 
+Configured severity overrides currently modify analyzer metadata copies but do
+not reach the driver's built-in `Report.Rules` inventory or SARIF levels. Status
+overrides do control blocking. This is an existing propagation limitation, not
+an intentional interpretation of SARIF or a conformance result.
+
+Package loading observes context; checker execution does not accept it. A
+cancelled configuration read cannot preempt an already blocked filesystem call
+or buffered YAML decoding.
+
 ## Public Go packages
 
 `analysis` is the reporting and policy model. `LoadConfigContext` strictly
@@ -93,7 +106,9 @@ the auditable exception pipeline. `WriteJSON` and `WriteSARIF` normalize and ser
 their enums are stable data contracts.
 
 `policy.NewRegistry` validates unique rule IDs, owners, metadata, and overlap
-records. `policy.Builtin` returns the shipped inventory in deterministic order.
+records. Construction retains nested caller maps and overlap slices; do not
+mutate them while using the registry. `Entries` copies those collections.
+`policy.Builtin` borrows nested exported analyzer rule metadata.
 
 Each `analyzers/<rule>` package exports `Rule` and `Analyzer`. Configurable
 packages also export typed `Options` and `New`; `New` rejects ambiguous or
@@ -144,9 +159,11 @@ Run the same check concurrently and with `-sequential` when investigating
 nondeterminism. Reports sort rules, diagnostics, suppressions, and exceptions;
 configuration maps and package scheduling must not affect bytes emitted.
 
-Run `golib api check` to compare exported Go documentation and the complete
-rule inventory with the reviewed files under `compat`. Intentional public
-changes require `./scripts/compatibility.sh update`, review of both diffs,
+Run `golib api check` for the configured comment-insensitive API baseline at
+`api/baseline.txt`. Separately, `./scripts/compatibility.sh check` compares native
+full GoDoc and the rule inventory under `compat`. Comment changes require native
+`./scripts/compatibility.sh update` for the documentation snapshot, preserving
+unchanged `rules.json`. Intentional contract changes require review of both diffs,
 compatibility guidance, and a version decision. Run
 `./scripts/reproducible-build.sh` to build the
 CGO-disabled, trimpath release binary twice and compare its bytes; the command

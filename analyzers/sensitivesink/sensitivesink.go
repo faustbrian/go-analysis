@@ -1,4 +1,14 @@
 // Package sensitivesink detects typed sensitive values passed to configured sinks.
+//
+// Use New to compare selected call argument types against configured sensitive
+// named types through pointers and containers. Conversion/type erasure,
+// arbitrary struct contents and runtime string values are not general taint
+// analysis; no redaction is performed.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package sensitivesink
 
 import (
@@ -17,23 +27,37 @@ const ruleID = "security/sensitive-sink"
 
 // SensitiveType identifies one named type carrying secret-bearing data.
 type SensitiveType struct {
+	// Package is the configured import path, not a filesystem path.
 	Package string
-	Name    string
+	// Name names the exact declared Go type, with aliases resolved during analysis.
+	Name string
 }
 
 // Sink identifies sensitive argument positions on one exact callable.
 type Sink struct {
-	Package         string
-	Symbol          string
-	Arguments       []int
-	VariadicFrom    *int
+	// Package is the configured import path, not a filesystem path.
+	Package string
+	// Symbol names a Function or Type.Method; matching uses the resolved Go object.
+	Symbol string
+	// Arguments lists zero-based call-expression argument positions; method-
+	// expression receivers participate.
+	Arguments []int
+	// VariadicFrom selects all argument positions at or after this non-negative
+	// index; nil disables the tail.
+	VariadicFrom *int
+	// AllowedPackages lists exact importing/calling package exemptions; nil grants
+	// none.
 	AllowedPackages []string
 }
 
 // Options configures sensitive types and output sinks.
 type Options struct {
+	// SensitiveTypes identifies named secret-bearing types; values erased to other
+	// types need separate analysis.
 	SensitiveTypes []SensitiveType
-	Sinks          []Sink
+	// Sinks selects exact metric or disclosure calls and argument positions; nil
+	// checks none.
+	Sinks []Sink
 }
 
 type symbolKey struct {
@@ -72,6 +96,8 @@ var Rule = shared.Rule{
 var Analyzer, _ = New(Options{})
 
 // New validates typed data policy and constructs an analyzer.
+// Configuration collections are copied into the analyzer; pass syntax/type data
+// is borrowed for each run. No caller collection is mutated.
 func New(options Options) (*analysis.Analyzer, error) {
 	sensitive := make(map[symbolKey]struct{}, len(options.SensitiveTypes))
 	for _, configuredType := range options.SensitiveTypes {

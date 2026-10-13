@@ -1,4 +1,13 @@
 // Package nounsafe forbids unsafe, cgo, and go:linkname in production policy.
+//
+// Use Analyzer for unsafe/C imports and go:linkname directives in supplied
+// files. This inspects syntax, not every possible memory-safety bypass or cgo
+// execution, and does not grant package exceptions itself.
+//
+// Analyzer descriptors and Rule metadata are exported mutable records. Configure
+// before execution and do not mutate descriptors or shared metadata concurrently.
+// Checks use supplied syntax/types; package loading and policy enforcement belong
+// to the caller or driver, not this package.
 package nounsafe
 
 import (
