@@ -28,6 +28,8 @@ func TestRunPropagatesConfiguredSeverityWithoutChangingBlockingPolicy(t *testing
 		{"default", "", "", "error"},
 		{"blocking info", shared.SeverityInfo, shared.StatusBlocking, "note"},
 		{"blocking warning", shared.SeverityWarning, shared.StatusBlocking, "warning"},
+		{"advisory default severity", "", shared.StatusAdvisory, "error"},
+		{"disabled default severity", "", shared.StatusDisabled, ""},
 		{"advisory error", shared.SeverityError, shared.StatusAdvisory, "error"},
 		{"advisory info", shared.SeverityInfo, shared.StatusAdvisory, "note"},
 		{"disabled warning", shared.SeverityWarning, shared.StatusDisabled, ""},
