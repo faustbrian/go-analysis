@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The project follows
 semantic versioning; compatibility decisions are described in
 [the compatibility policy](docs/compatibility.md).
 
+## 1.2.4 - 2026-10-22
+
+### Changed
+
+- Publish the current source and documentation with a fresh immutable tag.
+
 ## 1.2.3 - 2026-10-13
 
 This entry records a prepared compatible patch; publication is separate. Adopt
