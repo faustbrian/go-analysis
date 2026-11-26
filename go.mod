@@ -3,7 +3,7 @@ module github.com/faustbrian/go-analysis
 go 1.27.0
 
 require (
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/tools v0.51.0
 )
 
